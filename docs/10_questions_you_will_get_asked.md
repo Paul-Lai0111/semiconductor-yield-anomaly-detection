@@ -34,6 +34,20 @@ development operating-point rule when costs are unknown. The candidate with the
 best mean fold AP need not have the best maximum OOF F1. The protocol deliberately
 does not switch objectives after seeing which candidate benefits.
 
+## What exactly improved when I moved the threshold?
+
+For the **same fitted RF/KNN/SMOTE model and holdout scores**, threshold **0.5**
+catches **1 of 21** failures with **1 review and no false alarms**. The
+development-frozen threshold **0.242222** catches **10 of 21** with **52 reviews,
+42 false alarms, and 11 misses**. F1 changes from **0.0909 to 0.2740**, while
+**AP stays 0.2727**. The measured gain is **9 additional catches for 51 additional
+reviews**, not improved ranking or a quantified economic return.
+
+The threshold was chosen from development OOF labels. These counts do not compare
+the revised protocol with the historical test-tuned project; that would confound
+multiple evaluation and implementation changes.
+[Saved counts](../results/holdout_metrics.csv).
+
 ## Is AP the same as PR-AUC? Is ROC-AUC wrong here?
 
 The implementation reports scikit-learn average precision, which weights
@@ -101,11 +115,15 @@ helps. The project reports alarm burden instead of inventing those quantities.
 ## What does the temporal check establish?
 
 It checks fixed `xgb_knn` within development data: earlier time splits choose its
-threshold and the later block evaluates that rule. It is not a second model
-selection process, not an assessment of every possible selected model, and not
+threshold and the later block evaluates that rule. On **251 later rows with 14
+failures**, AP is **0.0967** against prevalence **0.0558**, and recall is **zero**
+at the earlier-selected threshold **0.267113**. I leave that result visible.
+
+This is not another model selection process or an assessment of RF/KNN/SMOTE's
+temporal performance. It is a fixed-XGBoost sensitivity check, and it is not
 independent of earlier exploration. The random holdout and temporal check address
-different assumptions. A good result in either does not remove possible lot or
-tool dependence.
+different assumptions; neither removes possible lot or tool dependence.
+[Chronological results](../results/RESULTS.md#chronological-sensitivity).
 
 ## Can feature importance tell an engineer what to repair?
 
@@ -115,11 +133,51 @@ Anonymous sensor IDs cannot be mapped to subsystems without additional metadata.
 Repair or maintenance recommendations would need process knowledge and further
 measurement.
 
-## What would be the most useful next evidence?
+## What did the supplementary checks establish?
 
-The frozen run now provides predictions, split membership, fold variation,
-confusion counts, and uncertainty. Beyond this dataset, I would value
-later process data with lot/tool identifiers, sensor definitions, and input
-availability times. That would let me examine dependence and prospective transfer
-before expanding the model search. The
-[journal](12_project_journal.md) records the current decisions and open questions.
+The three new development repeats rank XGBoost first at seed 17 and RF/KNN/SMOTE
+first at 43 and 89, among the four checked candidates. SMOTE-minus-plain-RF/KNN
+mean fold AP is positive in all three repeats: **+0.0183, +0.0447, and +0.0433**.
+The same development rows and overlapping training sets are reused, so these are
+descriptive results, not independent intervals or evidence for replacing the
+original selected model. The [diagnostics chapter](13_development_diagnostics.md)
+explains the seed policy and raw evidence.
+
+Capacity answers a different question: at the 10% per-fold budget, plain RF/KNN
+catches **29 of 83** development failures with **125 reviews**, versus SMOTE's
+**20**. For SMOTE, the 5%, 10%, and 20% per-fold budgets produce **60, 125, and
+250 reviews**, catching **15, 20, and 39 failures**, with **45, 105, and 211
+passing observations reviewed**. The limits use `floor(budget * fold_rows)` and
+preserve whole score ties. These random-fold blocks do not establish real
+inspection-batch behavior, costs, or prevented losses; this retrospective policy
+comparison does not retune the holdout.
+
+## What is the completed project's impact?
+
+I produced **7 pipelines compared over 35 primary CV fits**, frozen decisions and
+predictions, and **60 supplementary CV fits** for development sensitivity.
+The data filter retains **446 of 590 sensors** on full development data. I also
+completed **21 aggregate capacity comparisons**, **8 original figures plus 1
+development diagnostic and 1 findings summary**, a notebook audit with **16
+executed code cells**, and a batch-scoring interface with schema checks and hash metadata.
+Fit counts exclude full-development refits and the separate chronological check;
+fold sensor masks are learned separately.
+
+The selected model catches **10 of 21**
+holdout failures with **42 false alarms in 52 reviews**, at **F1 0.2740** and
+**AP 0.2727**. That quantifies detection and review burden. It does not measure
+manufacturing yield improvement, economic return, or production reliability.
+The [case study](14_findings_and_impact.md) ties the completed outputs and each
+chart's takeaway to saved evidence.
+
+## How should I read the closing visualizations?
+
+The [findings summary](../images/findings_summary.png) separates held-out ranking,
+the same-model threshold comparison, and hypothetical development review burden.
+The [supplementary figure](../supplementary/development/development_diagnostics.png)
+shows changing repeat ranks and the capacity tradeoff. I state the model, data
+partition, decision rule, and takeaway for each plot. Mixing the holdout's
+**21 failures** with development's **83**, or treating XGBoost's importance and
+threshold plots as explanations of the selected Random Forest, would change the
+meaning of the evidence. The figures close the study with measured findings and
+limits.

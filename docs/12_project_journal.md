@@ -82,6 +82,31 @@ cannot be checked without lot/tool identifiers, uncertain future prevalence,
 unknown alert costs, and previous exposure to this public dataset. The temporal
 check asks a narrower transfer question; it does not remove those limits.
 
+## What the supplementary checks settled
+
+I checked four existing candidates on three new shared five-fold development
+partitions, using seeds **17, 43, and 89** and fixed hyperparameters. These
+**60 additional CV fits** change fold assignment and estimator randomness
+together. They reuse the original **1,253 development rows and 83 failures**;
+they do not reopen the original holdout.
+
+SMOTE minus plain RF/KNN mean fold AP is **+0.0183, +0.0447, and +0.0433** in
+the new repeats. The consistent positive difference changes how I describe the
+old SMOTE attempt: it is an observed advantage for this pipeline over its plain
+RF/KNN reference. XGBoost leads at seed 17 and SMOTE at 43 and 89, among the four
+checked candidates. The leader is sensitive to the repeat, and reused data do not
+provide independent significance evidence or a replacement winner.
+
+I also ranked the **original OOF scores** inside each original validation fold
+under 5%, 10%, and 20% review budgets. The selected pipeline uses **60, 125, and
+250 reviews**, catching **15, 20, and 39 of 83 failures**, with **45, 105, and
+211 passing observations reviewed**. At 125 reviews, plain RF/KNN catches **29**
+versus SMOTE's **20**. This made the distinction between AP and capacity concrete:
+an AP-selected candidate need not catch the most failures at a particular review
+limit. The blocks are random folds, not factory inspection batches. The
+[supplementary chapter](13_development_diagnostics.md) records the rules and raw
+evidence; no original selection, threshold, or holdout result is replaced.
+
 ## Concrete design choices
 
 | Choice | Reason and consequence |
@@ -116,7 +141,40 @@ check asks a narrower transfer question; it does not remove those limits.
 | Time | Label-file timestamps unused | Separate development-only forward sensitivity check of fixed XGBoost |
 | Evidence | Console reports and three explanatory figures | Structured metrics, split/prediction exports, frozen protocol, generated report/figures, and selected-model payload |
 | Claims | Geometric causes and engineering benefits inferred from sparse evidence | Historical exploration distinguished from the frozen run; no causal or factory-outcome claims |
+| Development diagnostics | Single comparison used to support broad method claims | Three descriptive repeat comparisons and three hypothetical review budgets, separate from the frozen study |
+| Inference | Predictions embedded in the experiment script | Saved-pipeline batch command with schema validation, frozen-rule alerts, and hash metadata |
+| Closing narrative | A proposed maintenance direction from anonymous sensors | Measured findings, quantified outputs, chart takeaways, and explicit interpretation limits |
 
 Existing chapter filenames and their diagnostic progression are preserved. The
 new protocol and this journal add the evaluation contract and a record of the
 changes. The generated predictions and report carry the numerical evidence.
+
+## What I completed
+
+The original comparison contains **7 pipelines x 5 shared folds = 35 primary
+CV fits**. The supplement adds **4 x 3 x 5 = 60 CV fits**, and the capacity
+analysis adds **21 aggregate candidate/budget comparisons** without another fit.
+These fit counts exclude full-development refits and the separate chronological
+check. The learned full-development filter retains **446 of 590 sensors**;
+the actual fold masks are learned separately.
+
+I completed **8 original figures, 1 development diagnostic, and 1 findings
+summary**, with explicit model names, data partitions, and takeaways. The
+[executed notebook](../main.ipynb) preserves **16 executed code cells** that
+audit the original saved predictions, metrics, and provenance. Closing Markdown
+connects that audit to the supplementary findings. The batch interface uses the
+saved pipeline and frozen threshold to export scores and alerts with metadata;
+it demonstrates reproducible inference without measuring a factory deployment.
+
+My main measured result is the same-model threshold comparison: **1 to 10 of 21
+holdout failures caught**, with **1 to 52 reviews**, when moving from 0.5 to the
+development-frozen threshold **0.242222**. That is **9 more catches for 51 more
+reviews**, leaving **42 false alarms and 11 misses**. F1 changes from **0.0909
+to 0.2740** and AP remains **0.2727**. The weak fixed-XGBoost chronological
+result also remains visible: **AP 0.0967 and zero recall** at its earlier-selected
+threshold, rather than a revised rule chosen on later outcomes.
+
+The [findings and impact case study](14_findings_and_impact.md) closes the
+investigation with those results and their limitations. My contribution is a
+controlled, reconstructable study and a reusable scoring interface; yield gains,
+prevented losses, and physical sensor causes were not measured.

@@ -59,9 +59,9 @@ must come from the current run, not from a full-dataset exploratory summary.
 Median and KNN imputation both replace unavailable measurements with estimates.
 Neither identifies why a value is missing. Missingness related to failures or
 process regimes could affect performance, and aggressive filtering could discard
-useful but rarely observed signals. A later missingness-indicator comparison would
-be reasonable, but it would be a new experiment rather than an explanation already
-verified by this one.
+useful but rarely observed signals. The current comparison does not isolate
+missingness mechanisms, so imputed values cannot establish why a sensor reading
+was unavailable.
 
 High feature count relative to the number of failures raises concerns about noisy
 distances and unstable fits. It does not by itself prove class overlap, identify

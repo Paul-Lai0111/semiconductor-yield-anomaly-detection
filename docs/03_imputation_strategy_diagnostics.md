@@ -53,13 +53,12 @@ Neither labels nor timestamps enter donor selection. A nearby training row is no
 necessarily a row with the same label, a nearby timestamp, or the same physical
 failure mode. KNN can smooth an unusual observation just as median imputation can.
 
-## What would support a conclusion?
+## Reading the comparison
 
-A consistent AP difference on shared folds would support a predictive comparison
-under this preprocessing policy. I would also inspect fold variation, failure
-support, and runtime before calling the more complicated method worthwhile. A
-small development difference can be sampling noise, especially with few failures
-per validation fold.
+A consistent AP difference on shared folds supports a predictive comparison under
+this preprocessing policy. Fold variation, failure support, and runtime qualify
+the result. A small development difference can be sampling noise, especially with
+few failures per validation fold.
 
 An identical PCA component count after two imputers would show only that one
 cumulative-variance cutoff happened to select the same count. It would not prove
@@ -69,8 +68,11 @@ median-plus-PCA classifier comparison.
 
 ## What I can claim now
 
-Imputation is a modeling assumption that belongs inside each training fold. I
-cannot yet claim KNN improves AP or failure recall in the revised run. The
-[generated development and fold results](00_navigation.md#code-and-generated-evidence)
-will provide that evidence. The next chapter explains why the earlier scaling
-order changed.
+Imputation is a modeling assumption that belongs inside each training fold. In
+the original comparison, KNN/RF mean fold AP is **0.2007**, versus **0.1848** for
+Median/RF. In the three supplementary comparisons, KNN trails Median in two of
+three repeats. The measured advantage therefore depends on the partition; it does
+not support the old blanket claim that KNN improves performance by 50%.
+The [saved results](00_navigation.md#code-and-generated-evidence) and
+[repeat table](13_development_diagnostics.md#repeated-comparisons) make that
+qualification explicit.
