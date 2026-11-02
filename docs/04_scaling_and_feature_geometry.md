@@ -1,167 +1,69 @@
-# 04 – Scaling and Feature Geometry
-
-## 1. Why Scaling Is Not Cosmetic
-
-After selecting KNN imputation, the feature matrix contains:
-
-- 1,567 samples
-- 446 features
-- heterogeneous sensor scales
-
-Example:
-
-Some sensors:
-- values around 3,000
-- others around 0.01
-- others around 100
-
-Without scaling:
-
-High-magnitude sensors dominate distance calculations and variance structure.
-
-This is not a modeling detail.
-It changes the geometry of the feature space.
-
----
-
-## 2. What StandardScaler Actually Does
-
-StandardScaler performs:
-
-For each feature:
-
-x_scaled = (x - mean) / standard deviation
-
-This transforms each feature to:
-
-Mean = 0  
-Standard deviation = 1  
-
-This ensures all sensors operate on the same statistical baseline.
-
----
-
-## 3. What Breaks If We Skip Scaling
-
-### 3.1 KNN Imputation Distortion
-
-KNN uses Euclidean distance:
-
-d(x, y) = sqrt(sum((x_i - y_i)^2))
-
-If Sensor A ranges [0, 3000]
-and Sensor B ranges [0, 0.01]
-
-Then Sensor A dominates distance.
-
-Neighbor selection becomes magnitude-driven,
-not structure-driven.
-
----
-
-### 3.2 PCA Variance Bias
-
-PCA maximizes variance:
-
-Max Var(w^T X)
-
-If large-scale sensors dominate variance,
-principal components align with magnitude,
-not discriminative structure.
-
-Minority anomaly signals become buried.
-
----
-
-### 3.3 Optimization Instability
-
-For boosting algorithms:
-
-Gradient updates depend on feature scale.
-
-Unscaled data can cause:
-
-- elongated loss surface
-- unstable splits
-- suboptimal convergence
-
----
-
-## 4. Why Tree Models “Technically” Don’t Require Scaling
-
-Common statement:
-
-"Tree-based models do not require scaling."
-
-This is partially true.
-
-Tree splits are scale-invariant in 1D.
-
-But:
-
-- KNN imputation is scale-sensitive.
-- PCA is scale-sensitive.
-- Distance-based reasoning depends on scaling.
-- Even tree ensembles benefit from balanced feature spread.
-
-Since scaling is required upstream,
-we standardize globally for consistency.
-
----
-
-## 5. High-Dimensional Geometry After Scaling
-
-After scaling:
-
-The dataset becomes:
-
-446-dimensional normalized hyperspace.
-
-But this introduces a new reality:
-
-In high dimensions:
-
-- Distances concentrate
-- Nearest neighbors become less meaningful
-- Class overlap increases
-- Rare clusters shrink in relative volume
-
-This geometric property foreshadows:
-
-Why SMOTE will later fail.
-
-Because interpolation in high-dimensional space does not preserve class manifold integrity.
-
----
-
-## 6. Evidence From Observed Model Behavior
-
-After scaling:
-
-Random Forest still collapses to predicting majority class under default threshold.
-
-This tells us:
-
-The issue is not magnitude distortion anymore.
-
-The issue is:
-
-Loss function bias under imbalance.
-
----
-
-## 7. Decision Made at This Stage
-
-We commit to:
-
-- Scaling as mandatory preprocessing
-- Preserving 446 dimensions
-- Using scaling before PCA and model training
-
-We have corrected magnitude bias.
-
-Next, we investigate dimensionality reduction.
-
-PCA is not yet a solution.
-
-It is a diagnostic tool.
+# 04 - Scaling and Feature Geometry
+
+## Why the order matters
+
+The original KNN branch imputed raw measurements and scaled afterward. That made
+neighbor selection depend on the original numerical units. Scaling after neighbor
+selection cannot repair a neighbor choice already dominated by a large-scale
+sensor. This is a concrete implementation issue, separate from whether KNN later
+outperforms the median baseline.
+
+The revised non-dummy pipelines all filter sensors, scale observed values, and
+then impute. The median branch uses the same order, so the imputer comparison
+does not also change the location of scaling.
+
+## What is learned from training data
+
+For retained sensor `j`, `StandardScaler` applies:
+
+```text
+z_j = (x_j - training_mean_j) / training_standard_deviation_j
+```
+
+Its fit ignores NaNs and its transform preserves them. The subsequent imputer
+fills gaps in standardized coordinates. Means and standard deviations are learned
+on the current training rows only and reused for validation rows. After imputation,
+the completed columns need not have exactly zero mean and unit variance; the
+scaler was fitted to the observed entries, not to the completed matrix.
+
+The historical median branch fitted a separate scaler on test data. That used a
+different coordinate system at evaluation time and allowed test distribution
+information into preprocessing. A single fitted pipeline now carries training
+statistics through to prediction.
+
+## Which methods care about scale?
+
+| Method | Why scale matters here |
+| --- | --- |
+| KNN imputation | Distances depend on the relative numerical spread of sensor coordinates |
+| PCA | Variance directions depend on feature units; standardization changes the covariance structure being summarized |
+| SMOTE | Neighbors and interpolation are constructed in the completed standardized space |
+| Logistic regression | Feature scaling affects optimization and the meaning of its regularization penalty |
+| Random Forest and tree XGBoost | Splits generally do not require standardization; these pipelines include it for their upstream steps and consistent comparisons |
+
+Tree splits depend on value ordering and candidate cut points. Positive affine
+rescaling generally preserves those partitions. Numerical precision and histogram
+implementation details can produce small differences, but unscaled inputs do not
+inherently give tree boosting an elongated optimization surface requiring scaling.
+That explanation belongs to different kinds of optimization.
+
+## What standardization leaves unresolved
+
+Equalizing numerical spread does not make all sensors equally informative. It can
+also give a noisy low-variance sensor more influence in a distance calculation.
+Outliers still affect means and standard deviations, and correlations remain.
+Standardization does not establish normality, calibrated scores, class separation,
+or a physically meaningful neighborhood.
+
+High dimensionality makes those assumptions worth checking. It is a reason to
+compare KNN, median, and PCA under shared folds, rather than a sufficient
+explanation for any observed failure.
+
+## Decision retained in the protocol
+
+I use `StandardScaler` before both imputers and keep its fit local to each training
+partition. I am not claiming a measured scaling benefit: there is no unscaled
+ablation in the seven-candidate set. The change makes the intended KNN geometry
+explicit and fixes the earlier train/test inconsistency. The
+[PCA chapter](05_pca_as_structural_probe.md) examines what variance preservation
+can and cannot establish after that preprocessing.

@@ -1,126 +1,84 @@
-# 00 – Diagnostic Documentation Navigation
+# 00 - Diagnostic Documentation Navigation
 
-## Purpose of This Documentation
+## What I am investigating
 
-This documentation is not written as a tutorial.
+I started this side project to understand why a classifier could report high
+accuracy on semiconductor process measurements while missing the failure class.
+That led me through missing-data handling, scaling, PCA, SMOTE, class weighting,
+and decision thresholds. The useful outcome is a comparison I can inspect and
+reproduce, with clear limits on what the data supports.
 
-It is written as a structured diagnostic report that mirrors the actual Python pipeline implemented in `main.py`.
+UCI SECOM contains 1,567 observations and 590 anonymized sensor features: 1,463
+passes and 104 failures. Despite the repository's anomaly-detection name, the
+experiment is supervised binary classification using the supplied failure labels.
+It does not establish a factory deployment or an unsupervised novelty detector.
 
-The goal is not to demonstrate how to use machine learning libraries.
+## Evidence status
 
-The goal is to demonstrate how to design, debug, and justify a defect interception system under real industrial constraints.
+The original investigation reused test predictions and test labels to choose a
+threshold. Its results are **historical exploratory results**. They motivated the
+current questions, but cannot serve as an independent estimate of performance.
+Some earlier explanations also inferred physical or geometric causes from a
+single thresholded score; the chapters below separate observations from hypotheses.
 
----
+The revised protocol reserves a stratified 20% holdout with seed 2026. Seven
+candidates share five development folds. Mean fold average precision selects the
+candidate; pooled development out-of-fold predictions select its F1 threshold.
+The selection is frozen before holdout evaluation. Exact performance numbers,
+the selected candidate, retained feature counts, and PCA component counts are
+recorded in the generated evidence below. A new split does not erase earlier
+exposure to this public dataset.
 
-## What This Project Is Actually About
+## Documentation map
 
-This repository documents the full investigation process behind building a semiconductor yield anomaly detection system under:
+| Chapter | Question it addresses |
+| --- | --- |
+| [01 - Problem framing and metrics](01_problem_framing_and_metrics.md) | What do ranking, failure detection, and alarm burden measure? |
+| [02 - Data pathology and pruning](02_data_pathology_and_feature_pruning.md) | Which sensor filters are learned, and where may they be fitted? |
+| [03 - Imputation diagnostics](03_imputation_strategy_diagnostics.md) | What does median versus KNN imputation actually compare? |
+| [04 - Scaling and geometry](04_scaling_and_feature_geometry.md) | Why does scaling precede imputation, including for tree pipelines? |
+| [05 - PCA as a structural probe](05_pca_as_structural_probe.md) | What can explained variance tell me about prediction? |
+| [06 - PCA and SMOTE comparisons](06_algorithmic_failure_pca_and_smote.md) | How do I revisit earlier unsuccessful attempts without assuming their cause? |
+| [07 - Threshold and operating point](07_decision_threshold_and_operating_point.md) | How is a decision threshold selected without using holdout labels? |
+| [08 - Weighted XGBoost candidate](08_cost_sensitive_xgboost_final_model.md) | What does weighting change, and how does XGBoost enter selection? |
+| [09 - Interpretation and engineering limits](09_model_interpretability_and_engineering_translation.md) | What can feature importance support? |
+| [10 - Review questions](10_questions_you_will_get_asked.md) | Which assumptions and limitations need a direct answer? |
+| [11 - Experiment protocol](11_experiment_protocol.md) | What are the exact split, fit, selection, and reporting rules? |
+| [12 - Project journal](12_project_journal.md) | What changed from the original repository, and what remains unresolved? |
 
-- Severe class imbalance (93% vs 7%)
-- High-dimensional sensor noise (590 raw features)
-- Heavy missingness and dead channels
-- Asymmetric business cost (False Negatives >> False Positives)
-- Suppressed probability outputs in rare-event learning
+Chapters 01 through 09 retain the diagnostic order of the original investigation.
+For the reproducibility contract, start with chapter 11. Chapter 12 records the
+reasoning behind the revision and what changed after executing the protocol.
+Existing chapter filenames are retained, including the historical "final_model"
+filename for chapter 08; that filename does not preselect XGBoost.
 
-The final solution is:
+## Code and generated evidence
 
-Cost-sensitive XGBoost with precision-recall based threshold optimization.
+[main.py](../main.py) is the command-line entry point.
+[modeling.py](../secom/modeling.py) defines the candidates and preprocessing;
+[evaluation.py](../secom/evaluation.py) defines AP, threshold selection, and
+uncertainty summaries. Environment constraints live in
+[pyproject.toml](../pyproject.toml).
 
-But the final model is not the story.
+The completed default run generates the following evidence. Figures and metrics
+belong to the same source/protocol hashes; an image alone is not proof of that
+connection.
 
-The story is the diagnostic journey.
+| Output | Purpose |
+| --- | --- |
+| [metrics.json](../results/metrics.json) | Structured results and run context |
+| [development_metrics.csv](../results/development_metrics.csv) | Development candidate comparison |
+| [holdout_metrics.csv](../results/holdout_metrics.csv) | Post-selection holdout comparison |
+| [fold_metrics.csv](../results/fold_metrics.csv) | Fold-level scores and variation |
+| [split_manifest.csv](../results/split_manifest.csv) | Row assignments for auditing the split |
+| [oof_predictions.csv](../results/oof_predictions.csv) | Development scores used for threshold selection |
+| [holdout_predictions.csv](../results/holdout_predictions.csv) | Scores from refitted candidates on the holdout |
+| [feature_importance.csv](../results/feature_importance.csv) | Model-specific feature importance |
+| [protocol.json](../results/protocol.json) | Selection and configuration frozen before holdout evaluation |
+| [RESULTS.md](../results/RESULTS.md) | Generated human-readable report |
+| [images](../images/) | Figures generated by the current run |
+| `artifacts/selected_model.joblib` | Generated locally: selected pipeline, threshold, sensor order, and configuration |
 
----
-
-## How This Documentation Is Structured
-
-Each chapter answers six core questions:
-
-1. Why is this step necessary?
-2. What breaks if we skip it?
-3. What is the algorithm doing under the hood?
-4. Why can it fail in this specific dataset?
-5. What empirical evidence did we observe?
-6. What decision did we make next, and why?
-
-This structure ensures that every modeling choice is justified both statistically and operationally.
-
----
-
-## Documentation Map
-
-The documentation follows the exact logical progression of the pipeline.
-
-### 01 – Problem Framing and Metric Selection
-Defines the business objective, cost asymmetry, and why accuracy is misleading.
-
-### 02 – Data Pathology and Feature Pruning
-Diagnoses missingness, zero-variance sensors, and dimensional noise.
-
-### 03 – Imputation Strategy Diagnostics
-Compares Median vs KNN imputation under geometric and statistical reasoning.
-
-### 04 – Scaling and Feature Geometry
-Explains why standardization is required for PCA, KNN, and stable optimization.
-
-### 05 – PCA as Structural Probe (Not a Solution)
-Uses PCA to analyze variance structure and minority signal suppression.
-
-### 06 – Algorithmic Failure: PCA and SMOTE
-Explains why topology modification fails in high-dimensional overlapping spaces.
-
-### 07 – Decision Threshold and Operating Point
-Demonstrates why default 0.5 probability thresholds collapse in rare-event learning.
-
-### 08 – Final Model: Cost-Sensitive XGBoost
-Derives the weighted loss function and explains why this shifts the gradient dynamics.
-
-### 09 – From Model to Engineering Roadmap
-Translates feature importance into actionable preventive maintenance strategy.
-
-### 10 – Interview Defense and Edge Cases
-Anticipates technical questions and challenges the robustness of decisions.
-
----
-
-## Philosophy Behind the Diagnostic Approach
-
-Many ML projects present only the final model.
-
-This documentation deliberately preserves:
-
-- failed attempts
-- statistical dead-ends
-- misleading metrics
-- suppressed probability behavior
-- geometry-induced collapse
-
-Because in real production systems, failures are the most informative signals.
-
-The project demonstrates not algorithm usage, but system reasoning.
-
----
-
-## How to Read This Report
-
-If you are reviewing this project as:
-
-- A hiring manager → read 01, 06, 08, 09
-- A machine learning engineer → read 03 through 08
-- An interviewer → read 10
-- A manufacturing engineer → read 09
-
----
-
-## Final Statement
-
-This repository is not a demonstration of algorithm usage.
-
-It is a structured exploration of how to design a defect interception system under:
-
-- severe imbalance
-- high-dimensional sensor noise
-- asymmetric business cost
-- suppressed probability outputs
-
-The final system, cost-sensitive XGBoost with optimized threshold selection, represents a principled balance between statistical rigor and manufacturing practicality.
+Read performance claims from the generated report together with its protocol and
+prediction files. This documentation explains how to interpret that evidence; it
+does not substitute remembered scores for a completed run.

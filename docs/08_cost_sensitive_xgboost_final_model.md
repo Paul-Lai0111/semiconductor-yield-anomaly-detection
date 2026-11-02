@@ -1,203 +1,91 @@
-# 08 – Final Model: Cost-Sensitive XGBoost
-
-## 1. Why We Chose XGBoost
-
-After observing failure patterns in:
-
-- PCA (variance suppression)
-- SMOTE (manifold distortion)
-- Default Random Forest (majority collapse)
-
-We required a model that:
-
-- Handles high-dimensional tabular data
-- Captures nonlinear interactions
-- Supports class weighting
-- Is robust under noise
-- Performs well in imbalanced settings
-
-XGBoost satisfies these requirements.
-
-It is a gradient boosting framework
-that sequentially minimizes residual errors.
-
----
-
-## 2. What XGBoost Does Under the Hood
-
-XGBoost optimizes:
-
-Logistic loss:
-
-L = - Σ [ y log(p) + (1-y) log(1-p) ]
-
-Where:
-
-p = sigmoid(f(x))
-
-It builds trees sequentially,
-each correcting the gradient residual of previous trees.
-
-Key concept:
-
-Gradient = prediction error signal.
-
-Under imbalance,
-majority class dominates gradient updates.
-
-Therefore:
-
-Without intervention,
-model favors majority.
-
----
-
-## 3. Cost-Sensitive Learning via scale_pos_weight
-
-To counter imbalance,
-we set:
-
-scale_pos_weight ≈ (negative samples / positive samples)
-
-This modifies the loss:
-
-L = - Σ [ w * y log(p) + (1-y) log(1-p) ]
-
-Where:
-
-w > 1 for positive (defect) class.
-
-Effect:
-
-False Negatives become more expensive.
-
-Gradients for defect misclassification increase.
-
-The model is forced to pay attention to minority samples.
-
----
-
-## 4. Why Weighting Alone Was Not Enough
-
-With cost-sensitive learning
-but default threshold 0.5:
-
-F1 remained 0.00.
-
-Why?
-
-Because:
-
-Even though gradient dynamics shift,
-probability outputs remain compressed.
-
-Thus:
-
-Weighting improves ranking quality,
-but decision threshold must still be tuned.
-
-This confirms:
-
-Training objective and operating threshold are independent axes.
-
----
-
-## 5. Final Optimized Performance
-
-Using:
-
-- KNN imputation
-- Standardization
-- Full 446 dimensions
-- scale_pos_weight
-- PR-based threshold optimization
-
-Best threshold ≈ 0.0159
-
-Final performance:
-
-| Metric | Value |
-|----------|--------|
-| Precision | 0.26 |
-| Recall | 0.57 |
-| F1 | 0.36 |
-| Accuracy | 0.86 |
-
-Interpretation:
-
-57% of defects intercepted.
-
-Precision 0.26 means:
-
-About 1 in 4 flagged wafers is truly defective.
-
-Baseline defect rate was 6.6%.
-
-This represents ~4x precision lift over random.
-
----
-
-## 6. Why This Is a Meaningful Improvement
-
-Under rare-event detection:
-
-Perfect precision is unrealistic.
-
-The real question is:
-
-Does recall gain justify inspection cost?
-
-In semiconductor manufacturing:
-
-Intercepting 57% of defects
-may save significant downstream cost.
-
-The tradeoff is operationally favorable.
-
----
-
-## 7. Why XGBoost Succeeded
-
-XGBoost succeeded because:
-
-- It models nonlinear feature interactions.
-- It handles sparse structure well.
-- Weighted gradients amplify minority signal.
-- It produces calibrated ranking probabilities.
-- Threshold tuning converts ranking into policy.
-
-Unlike PCA or SMOTE,
-it does not distort topology.
-
-It changes optimization dynamics.
-
----
-
-## 8. What This Model Is NOT
-
-It is not:
-
-- A perfect defect detector.
-- A calibrated probability estimator.
-- A generative model of manufacturing process.
-
-It is:
-
-A risk ranking engine
-converted into inspection policy.
-
----
-
-## 9. Decision at Final Model Stage
-
-We commit to:
-
-- Cost-sensitive XGBoost
-- PR-based threshold optimization
-- Full feature space retention
-- No synthetic sampling
-- No dimensionality compression
-
-Next step:
-
-Translate model importance into engineering insight.
+# 08 - Weighted XGBoost as a Candidate
+
+## Why it remains in the study
+
+The original project ended with weighted XGBoost and a threshold chosen on the
+same test predictions. That exploration made boosting worth revisiting, but did
+not establish an independently evaluated winner. I keep the existing chapter
+filename for links; the revised protocol allows any of the seven candidates to
+be selected by development mean fold AP.
+
+XGBoost is a reasonable candidate for nonlinear relationships in tabular sensor
+data. Trees can express interactions without requiring a distance-based
+classifier. Whether that helps here must be measured against the dummy, logistic,
+and Random Forest alternatives.
+
+## What the positive weight changes
+
+For a binary logistic objective with failure score `p`, the weighted data loss is:
+
+```text
+L = -sum_i [w * y_i * log(p_i) + (1 - y_i) * log(1 - p_i)]
+w = number of training passes / number of training failures
+```
+
+Tree regularization is applied in addition to this data loss. Positive-class
+weighting changes the gradient and Hessian contributions from failure rows,
+which affects split selection and leaf values. It does not directly optimize F1
+or impose a particular false-negative cost in money.
+
+`fit_pipeline` in [modeling.py](../secom/modeling.py) recomputes
+`scale_pos_weight` from the labels of the current training partition. A fold uses
+its training labels; the full-development refit uses development labels; a
+temporal window uses only its earlier training labels. No holdout prevalence is
+used to set this weight.
+
+Weighting can change both ranking and score scale. It guarantees neither better
+AP nor calibrated probabilities. A weighted loss generally targets a different
+effective class distribution, so I treat `predict_proba` output as a score until
+calibration has been separately assessed.
+
+## Fixed configuration
+
+| Parameter | Default study value |
+| --- | --- |
+| Candidate | `xgb_knn` |
+| Preprocessing | Fold-local sensor filter, StandardScaler, KNN imputation with 5 neighbors |
+| Trees | 300 |
+| Maximum depth | 3 |
+| Learning rate | 0.05 |
+| Minimum child weight | 5 |
+| L2 leaf regularization, `reg_lambda` | 10.0 |
+| Row subsampling | 0.8 |
+| Column subsampling per tree | 0.8 |
+| Tree method | `hist` |
+| Evaluation metric | `logloss` |
+| Importance type | `gain` |
+| Random seed | 2026 |
+| Positive weight | Training passes / training failures, recomputed per fit |
+
+These are fixed comparison settings, not the result of a new hyperparameter
+search. There is no holdout-driven early stopping. The shared 300-tree setting
+with Random Forest does not equalize model capacity or computation; the study
+compares these specified pipelines rather than every possible tuned model family.
+
+## Selection and saved model
+
+Mean fold AP selects the candidate, with exact ties resolved by the listed
+candidate order. Each candidate's OOF F1 threshold is selected on development data
+and frozen before the holdout is evaluated. A favorable XGBoost holdout result
+cannot replace a different development-selected candidate.
+
+`artifacts/selected_model.joblib` contains the selected pipeline, threshold,
+`sensor_columns`, and `config`. It is a reproducibility artifact from the study,
+not evidence of production readiness. XGBoost scores and the actual selected
+candidate are recorded in the
+[generated report](00_navigation.md#code-and-generated-evidence).
+
+## Temporal sensitivity is a separate question
+
+The temporal check deliberately fixes `xgb_knn` rather than selecting a second
+winner. Within development data, it uses earlier observations to choose a
+threshold through three expanding time splits, refits on the earlier block, and
+evaluates the later 20%. It asks whether this particular pipeline transfers
+forward within the available history. It does not validate whichever candidate
+wins the main comparison, and it is not independent of the project's exploratory
+history. [Chapter 11](11_experiment_protocol.md#temporal-sensitivity-check) gives the
+exact boundaries.
+
+The remaining question is what the fitted model can tell me about its inputs.
+[Chapter 09](09_model_interpretability_and_engineering_translation.md) separates
+predictive importance from a physical explanation.

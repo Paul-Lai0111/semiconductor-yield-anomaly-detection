@@ -1,187 +1,77 @@
-# 09 – From Model to Engineering Roadmap
-
-## 1. Why Interpretability Is Mandatory
-
-A machine learning model that outputs only predictions is not useful in manufacturing.
-
-Engineers do not act on probabilities.
-They act on root causes.
-
-Therefore:
-
-The model must answer:
-
-Which sensors drive defect risk?
-
-And:
-
-How can this be translated into preventative maintenance (PM) strategy?
-
----
-
-## 2. Feature Importance Extraction
-
-Using XGBoost’s gain-based importance,
-we extracted the top contributing sensors.
-
-Top 15 sensors by importance:
-
-| Rank | Sensor ID | Importance |
-|------|------------|------------|
-| 1 | 271 | 0.048 |
-| 2 | 130 | 0.038 |
-| 3 | 319 | 0.037 |
-| 4 | 199 | 0.031 |
-| 5 | 56 | 0.027 |
-| 6 | 9 | 0.024 |
-| 7 | 103 | 0.022 |
-| 8 | 433 | 0.021 |
-| 9 | 214 | 0.019 |
-| 10 | 489 | 0.019 |
-| 11 | 53 | 0.017 |
-| 12 | 26 | 0.017 |
-| 13 | 31 | 0.015 |
-| 14 | 470 | 0.014 |
-| 15 | 202 | 0.014 |
-
-These 15 sensors explain a significant proportion of model split gain.
-
-This narrows monitoring focus from:
-
-446 sensors → 15 critical signals.
-
----
-
-## 3. What “Importance” Means in XGBoost
-
-XGBoost importance (gain-based):
-
-Measures total improvement in loss function
-brought by splits using that feature.
-
-It does NOT mean:
-
-Causality  
-Physical mechanism  
-
-It means:
-
-This sensor helps partition defect vs normal in tree structure.
-
----
-
-## 4. Engineering Interpretation Strategy
-
-We translate importance into action in three steps:
-
-### Step 1 – Sensor Grouping
-
-Cluster top sensors by:
-
-- Tool module
-- Physical subsystem
-- Process step
-
-This identifies concentration of failure risk.
-
----
-
-### Step 2 – Distribution Analysis
-
-For each top sensor:
-
-Plot:
-
-Defect vs Normal distribution
-
-Look for:
-
-- Shifted mean
-- Increased variance
-- Bimodal behavior
-
-This reveals physical instability.
-
----
-
-### Step 3 – Early Warning Threshold
-
-Instead of using model threshold alone:
-
-We can derive:
-
-Sensor-specific anomaly thresholds.
-
-This creates:
-
-Pre-model alert system.
-
----
-
-## 5. Why This Matters
-
-Instead of saying:
-
-“The model predicts risk”
-
-We can say:
-
-“These 3 subsystems show abnormal fluctuation patterns
-associated with yield loss.”
-
-This transforms:
-
-Black-box ML → Actionable PM roadmap
-
----
-
-## 6. From Detection to Prevention
-
-The pipeline can be used for:
-
-1. Real-time risk scoring
-2. Tool health monitoring
-3. Sensor drift detection
-4. Preventative maintenance scheduling
-
-If a wafer receives high risk score:
-
-Engineers can inspect:
-
-The top contributing sensors for that specific prediction.
-
-This bridges:
-
-Data science → Process engineering.
-
----
-
-## 7. What This Model Still Cannot Do
-
-- It cannot determine physical causality.
-- It cannot simulate process behavior.
-- It cannot replace domain expertise.
-
-It highlights statistical risk drivers.
-
-Final decisions remain engineering-driven.
-
----
-
-## 8. Final Engineering Outcome
-
-We reduced complexity from:
-
-590 raw sensors  
-→ 446 validated features  
-→ 15 high-impact sensors  
-
-We built:
-
-A defect interception system  
-AND  
-A sensor prioritization roadmap.
-
-Next chapter:
-
-Anticipated interview and technical challenges.
+# 09 - Model Interpretation and Engineering Limits
+
+## What I want to learn from importance
+
+After comparing predictions, I want to inspect which inputs the fitted model
+uses. That can reveal dependence on a small set of columns, suggest checks for
+measurement artifacts, and guide a more focused follow-up analysis. It cannot
+identify a tool subsystem when sensor meanings are unavailable.
+
+The earlier documentation turned a ranked sensor list into a maintenance roadmap.
+That went beyond the evidence. The revised study treats importance as a model
+diagnostic and exports exact sensor ranks from the current development-trained XGBoost fit.
+
+## Read the importance definition first
+
+For XGBoost configured with `importance_type="gain"`, importance describes the
+average improvement in the training objective for splits using a feature. The
+scikit-learn interface normalizes its reported importances. This is distinct
+from total gain accumulated across all splits, and from an effect on held-out
+performance.
+
+A Random Forest's impurity importance or a logistic regression coefficient has a
+different definition. Their numerical values are not interchangeable with gain.
+The selected model can also be the dummy or a PCA pipeline, so a table must be
+read with its model and representation in mind. PCA coordinates are combinations
+of retained sensors; a component's tree importance is not directly an original
+sensor's importance. A back-projection through loadings would be an additional
+approximation, not a measured sensor effect.
+
+The generated `results/feature_importance.csv` and corresponding figure are
+descriptive outputs of XGBoost even when a different candidate is selected. Read
+them with that model identity and frozen run context
+in [the results index](00_navigation.md#code-and-generated-evidence). The old top
+sensor list is not carried forward as a new finding.
+
+## Sources of ambiguity
+
+Correlated sensors can substitute for one another, splitting or concentrating
+importance differently across fits. Imputed values also affect which splits are
+available. A high-importance column might reflect process conditions, a logging
+pattern, or a proxy for another variable. A low-importance column may be redundant
+with a stronger correlated column rather than physically irrelevant.
+
+Global gain does not give the direction of an association. It also does not
+explain why a particular observation received an alert. Local attribution,
+held-out permutation importance, and stability across resamples would answer
+additional questions; they are not established merely by exporting a gain table.
+Using the holdout to design a smaller feature set would consume it for another
+selection decision and require a new evaluation boundary.
+
+## A useful next investigation
+
+With access to process metadata, I would first map anonymous columns to actual
+measurements, check units and acquisition times, and verify that each value would
+be available when an alert is intended. I would then inspect missingness and
+distributions for candidate signals across process regimes, lots, and time.
+Those checks could distinguish a repeatable association from a data artifact.
+
+Only after that would I ask a process engineer whether a proposed mechanism is
+plausible and what measurement or controlled intervention could test it. No such
+mapping, intervention, sensor-specific limit, or maintenance outcome has been
+demonstrated here. A high gain value does not justify replacing or recalibrating
+a sensor.
+
+## What remains outside this project
+
+This offline public-data study does not establish real-time availability, stable
+future prevalence, calibrated failure probabilities, a review capacity, or reduced
+factory losses. The timestamps permit a limited sensitivity check, but no supplied
+lot or tool grouping is used to establish independence between observations.
+Related rows could appear across a random split.
+
+The engineering value at this stage is a reproducible way to inspect ranking,
+alarm burden, and model dependence on inputs. Claims about physical causes or
+yield improvement would require evidence beyond this dataset and experiment.
+The [review questions](10_questions_you_will_get_asked.md) collect the remaining
+statistical and practical limits.

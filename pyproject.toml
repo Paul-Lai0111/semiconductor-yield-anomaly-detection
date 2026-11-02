@@ -1,0 +1,38 @@
+[project]
+name = "secom-diagnostic-study"
+version = "2.0.0"
+description = "A reproducible investigation of missing data, imbalance, and decision thresholds on UCI SECOM."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "numpy>=2.2,<3",
+  "pandas>=2.2,<3",
+  "scipy>=1.15,<2",
+  "scikit-learn>=1.6,<1.8",
+  "imbalanced-learn>=0.13,<0.15",
+  "xgboost>=3.0,<4",
+  "matplotlib>=3.10,<4",
+  "joblib>=1.4,<2",
+  "threadpoolctl>=3.6,<4",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3,<10",
+  "ruff>=0.11,<1",
+  "nbclient>=0.10,<1",
+  "nbformat>=5.10,<6",
+  "ipykernel>=6.29,<8",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+include = ["secom/**/*.py", "tests/**/*.py", "scripts/**/*.py", "main.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]

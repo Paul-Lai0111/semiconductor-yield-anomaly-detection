@@ -1,197 +1,76 @@
-# 03 – Imputation Strategy Diagnostics
-
-## 1. Why Imputation Strategy Matters
-
-After removing high-sparsity and zero-variance features,  
-the dataset still contains missing values.
-
-At this stage, we face a critical design decision:
-
-How do we fill remaining gaps without destroying anomaly structure?
-
-This is not a cosmetic preprocessing step.
-
-Imputation changes the geometry of the feature space.
-
-And geometry determines classification boundaries.
-
----
-
-## 2. Two Candidate Strategies
-
-We evaluated two strategies:
-
-| Pipeline | Strategy |
-|-----------|------------|
-| A | Global Median Imputation |
-| B | K-Nearest Neighbors (KNN) Imputation |
-
-Both pipelines operate on the same 446-dimensional space.
-
----
-
-## 3. What Each Algorithm Does Under the Hood
-
-### 3.1 Median Imputation (Global Statistic)
-
-For each feature:
-
-Missing value → replaced with feature median
-
-Mathematically:
-
-x_missing = median(x_feature)
-
-This assumes:
-
-Missingness is random  
-Feature distribution is stable  
-Global central tendency is meaningful  
-
-It ignores local correlations between sensors.
-
----
-
-### 3.2 KNN Imputation (Local Correlation)
-
-For each sample with missing values:
-
-1. Find k nearest complete samples
-2. Use their feature values to estimate missing entry
-
-This preserves:
-
-Local geometry  
-Inter-sensor correlation  
-Failure-mode clusters  
-
-In semiconductor systems:
-
-Failure states often produce correlated sensor fluctuations.
-
-KNN attempts to preserve this.
-
----
-
-## 4. PCA Variance Diagnostic
-
-We compared macro variance structure using PCA.
-
-| Pipeline | Components Needed for 90% Variance |
-|------------|------------------------------------|
-| Median | 129 |
-| KNN | 129 |
-
-Observation:
-
-Global variance structure remains identical.
-
-Interpretation:
-
-Since high-sparsity features were removed earlier,  
-remaining missingness is sparse.
-
-Therefore, macro geometry is stable.
-
-This tells us:
-
-The real difference between imputation strategies is local, not global.
-
----
-
-## 5. Downstream Model Evidence (Random Forest, Threshold=0.15)
-
-### Pipeline A – Median
-
-| Metric | Value |
-|----------|--------|
-| Precision | 0.15 |
-| Recall | 0.10 |
-| F1 | 0.1176 |
-
----
-
-### Pipeline B – KNN
-
-| Metric | Value |
-|----------|--------|
-| Precision | 0.23 |
-| Recall | 0.14 |
-| F1 | 0.1765 |
-
----
-
-## 6. Why KNN Performed Better
-
-Median imputation smooths the minority class.
-
-Defect samples often have subtle deviations.
-
-Replacing missing entries with median pulls them toward normal cluster.
-
-This reduces separability.
-
-KNN imputation preserves:
-
-Local sensor correlation structure.
-
-It respects the idea:
-
-Similar wafers likely share failure modes.
-
----
-
-## 7. What Would Break If We Used Median?
-
-- Minority anomalies shrink toward majority center
-- PCA later suppresses minority variance further
-- SMOTE interpolates from already-smoothed points
-- Decision boundary collapses faster
-
-Median increases overlap.
-
-KNN preserves local heterogeneity.
-
----
-
-## 8. Why KNN Still Doesn't Solve Everything
-
-Despite improvement:
-
-F1 remains below 0.18
-
-This tells us:
-
-The core issue is not imputation alone.
-
-It is:
-
-Class imbalance  
-Probability compression  
-High-dimensional overlap  
-
-Imputation selection improves signal preservation.
-
-It does not fix rare-event learning dynamics.
-
----
-
-## 9. Decision Made at This Stage
-
-We select:
-
-KNN Imputation as architectural backbone.
-
-Because:
-
-It preserves local structure  
-It improves minority F1 by ~50%  
-It is geometrically consistent  
-
-But we acknowledge:
-
-The imbalance problem remains unsolved.
-
-Next stage:
-
-Scaling and geometry normalization.
+# 03 - Imputation Strategy Diagnostics
+
+## Why compare two imputers?
+
+My original question was whether borrowing information from nearby observations
+would help more than filling every gap with a column median. The old comparison
+was exploratory: preprocessing and threshold choices were not controlled well
+enough to establish a general KNN advantage. I retain both choices in the revised
+experiment rather than treating KNN as a proven prerequisite.
+
+For the direct comparison, `rf_median` and `rf_knn` share development folds, sensor
+filtering, scaling, and Random Forest settings. Only the imputer changes. Their
+mean fold AP values are the primary comparison; F1 at 0.5 answers a different,
+threshold-specific question.
+
+## The actual preprocessing order
+
+Both pipelines use:
+
+```text
+training-fitted sensor filter
+  -> training-fitted StandardScaler, preserving NaNs
+  -> training-fitted median or KNN imputer
+  -> classifier
+```
+
+Scaling comes before both imputers. In the KNN case this ensures that neighbor
+selection uses standardized observed coordinates. The median branch follows the
+same order for a controlled comparison. Validation rows are transformed using
+training statistics; they do not supply replacement medians, scaling statistics,
+or a new neighbor reference set.
+
+## What each method estimates
+
+| Choice | Implementation | Useful property | Limitation |
+| --- | --- | --- | --- |
+| Median | `SimpleImputer(strategy="median")` | Simple per-sensor estimate, resistant to extreme observed values | Ignores relationships with other sensors and can compress variation where values are missing |
+| KNN | `KNNImputer(n_neighbors=5)` | Uses observed coordinates to choose training donors | Depends on the distance representation and can borrow from a different class or process regime |
+
+The median is learned separately for each retained, scaled sensor. This is a
+baseline, not a claim that missingness is random or that every observation should
+be near a common operating point.
+
+KNN uses the default NaN-aware Euclidean distance. For two rows with shared
+observed coordinates, it rescales their summed squared differences for the number
+of coordinates available. A donor can itself have missing entries; it must have
+an observed value for the sensor being imputed. With default uniform weighting,
+available nearby donors contribute equally. If distances cannot be defined for
+the required feature, the implementation can fall back to its training-column
+mean.
+
+Neither labels nor timestamps enter donor selection. A nearby training row is not
+necessarily a row with the same label, a nearby timestamp, or the same physical
+failure mode. KNN can smooth an unusual observation just as median imputation can.
+
+## What would support a conclusion?
+
+A consistent AP difference on shared folds would support a predictive comparison
+under this preprocessing policy. I would also inspect fold variation, failure
+support, and runtime before calling the more complicated method worthwhile. A
+small development difference can be sampling noise, especially with few failures
+per validation fold.
+
+An identical PCA component count after two imputers would show only that one
+cumulative-variance cutoff happened to select the same count. It would not prove
+identical covariance, equal neighborhoods, or preservation of failure structure.
+The revised candidate set includes KNN plus PCA; it does not include a second
+median-plus-PCA classifier comparison.
+
+## What I can claim now
+
+Imputation is a modeling assumption that belongs inside each training fold. I
+cannot yet claim KNN improves AP or failure recall in the revised run. The
+[generated development and fold results](00_navigation.md#code-and-generated-evidence)
+will provide that evidence. The next chapter explains why the earlier scaling
+order changed.

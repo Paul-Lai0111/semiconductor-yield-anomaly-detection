@@ -1,206 +1,96 @@
-# 07 – Decision Threshold and Operating Point
-
-## 1. The Hidden Problem: Default Threshold = 0.5
-
-After:
-
-- Feature pruning
-- KNN imputation
-- Scaling
-- PCA failure
-- SMOTE failure
-
-We trained XGBoost with class weighting.
-
-But under default threshold (0.5):
-
-F1 (defect) = 0.00
-
-The model still predicts all samples as normal.
-
-This is not a model failure.
-
-It is a decision policy failure.
-
----
-
-## 2. What the 0.5 Threshold Actually Means
-
-Binary classifier outputs probability:
-
-P(y = 1 | x)
-
-Using threshold = 0.5 means:
-
-We require the model to believe defect is more likely than normal.
-
-In highly imbalanced problems:
-
-True defect probability is naturally low.
-
-Even real defective wafers may receive:
-
-0.01  
-0.03  
-0.07  
-
-Requiring > 0.5 is mathematically unrealistic.
-
----
-
-## 3. Probability Compression in Rare Event Learning
-
-In imbalanced datasets:
-
-The model minimizes log-loss:
-
-Loss = -[y log(p) + (1-y) log(1-p)]
-
-Because majority dominates training,
-the optimal probability distribution shifts toward normal class.
-
-This causes probability compression:
-
-Predicted probabilities cluster near 0.
-
-Even strong defect signals may not exceed 0.1.
-
-This explains observed test outputs:
-
-Top predicted defect probabilities were around:
-
-0.35  
-0.38  
-0.52 (rare)
-
-But most true defects remained below 0.5.
-
----
-
-## 4. Precision-Recall Curve as Operating Map
-
-Instead of fixing threshold at 0.5,
-we evaluated the Precision-Recall curve.
-
-PR curve directly maps:
-
-Threshold → (Precision, Recall)
-
-This allows us to select an operating point
-aligned with business objective.
-
-Remember:
-
-False Negative cost >> False Positive cost
-
-Therefore:
-
-Recall must be prioritized.
-
----
-
-## 5. Empirical Threshold Optimization
-
-We searched across thresholds.
-
-Best threshold found:
-
-≈ 0.0159
-
-At this threshold:
-
-| Metric | Value |
-|----------|--------|
-| Precision | 0.26 |
-| Recall | 0.57 |
-| F1 | 0.36 |
-| Accuracy | 0.86 |
-
-Comparison:
-
-| Setting | F1 |
-|----------|------|
-| Default 0.5 | 0.00 |
-| Optimized Threshold | 0.36 |
-
-This is the first successful break of the collapse.
-
----
-
-## 6. Why Lowering Threshold Works
-
-Lower threshold:
-
-Expands positive prediction region.
-
-We are no longer asking:
-
-"Is this wafer more likely defective than normal?"
-
-We are asking:
-
-"Does this wafer show early defect signal?"
-
-This reframes the classifier as:
-
-Risk ranking system.
-
-Not binary truth oracle.
-
----
-
-## 7. What Breaks If We Ignore Threshold Tuning
-
-If threshold remains 0.5:
-
-- Recall remains zero
-- System detects no defects
-- Production failure continues
-
-In rare-event detection:
-
-Threshold is part of the model.
-
-It is not post-processing.
-
----
-
-## 8. Operating Point as Business Decision
-
-Selecting threshold is equivalent to:
-
-Selecting inspection budget.
-
-Higher threshold:
-- Fewer inspections
-- More missed defects
-
-Lower threshold:
-- More inspections
-- Fewer missed defects
-
-This is a controllable tradeoff.
-
-Therefore:
-
-Model training and decision threshold must be separated.
-
----
-
-## 9. Decision Made at This Stage
-
-We conclude:
-
-- Threshold tuning is mandatory.
-- Default 0.5 is invalid under imbalance.
-- PR-based optimization aligns with business objective.
-
-However:
-
-Threshold tuning alone does not solve gradient bias.
-
-We must also modify objective function.
-
-Next chapter:
-
-Cost-sensitive XGBoost as final model.
+# 07 - Decision Threshold and Operating Point
+
+## Ranking and alerts answer different questions
+
+A candidate produces a failure score. The decision rule is:
+
+```text
+alert = 1 if score >= threshold, otherwise 0
+```
+
+Changing the threshold changes alerts, not the underlying ranking or AP. Lowering
+it can recover failures below 0.5, but also adds false positives. A score below
+0.5 does not establish that the model failed to rank observations, and rare
+failures are not mathematically prevented from receiving high scores.
+
+The value 0.5 is a useful common diagnostic point. Its probabilistic interpretation
+requires calibrated probabilities and a suitable decision objective. Class-weighted
+or oversampled models do not automatically satisfy those conditions.
+
+## The historical evaluation problem
+
+The original script used test scores and test labels to find the threshold with
+the largest F1, then reported F1 on those same observations. That is threshold
+selection on the evaluation set. The optimized score is historical exploratory
+evidence, not an independent test result, regardless of whether the threshold
+looks numerically plausible.
+
+I do not reuse that threshold in the revised protocol. A new split improves the
+evaluation procedure but does not turn a previously explored public dataset into
+unseen evidence.
+
+## The development-only rule
+
+Each candidate receives one OOF score per development row from a model fitted
+without that row. Candidate selection uses mean validation-fold AP. Thresholds
+are then selected from each candidate's pooled development OOF scores, using:
+
+```text
+F1(t) = 2 * TP(t) / (2 * TP(t) + FP(t) + FN(t))
+t_star = threshold with maximum pooled OOF F1
+exact F1 ties -> choose the highest threshold
+```
+
+The implementation in [evaluation.py](../secom/evaluation.py) considers distinct
+observed scores in descending order, with tied scores moving together. Integer
+confusion-count cross-products compare F1 exactly, so floating-point rounding
+cannot reverse the tie rule. It considers the same observed operating points as
+the PR curve; the terminal PR endpoint has no threshold. Predictions use `>=`,
+including scores exactly equal to the selected threshold.
+
+The highest-threshold tie rule is deterministic. Among exactly tied maxima it
+chooses the option issuing no more alerts than lower tied thresholds. It does not
+add a general precision constraint, capacity limit, or uncertainty tolerance to
+the objective.
+
+## What is frozen
+
+Before holdout evaluation, the run records the selected candidate, all development
+thresholds, and the configuration in `results/protocol.json`. Every candidate is
+refitted on all development rows, then evaluated on the same holdout with its
+already selected threshold and at the common 0.5 diagnostic point. Reporting all
+seven candidates after selection makes the comparison inspectable; it does not
+authorize choosing a different winner from the holdout table.
+
+The selected-model artifact stores the selected pipeline and its frozen threshold.
+The full-development fit can produce a score distribution different from the
+fold models. That is one reason to evaluate the frozen rule on the holdout rather
+than silently adjusting it there.
+
+## Optimism and uncertainty
+
+OOF predictions avoid fitting an observation's own fold model on that observation.
+They do not remove all selection bias. The candidate was chosen using these
+development data, and the maximum F1 threshold was chosen using the same OOF
+labels on which its F1 is summarized. The maximum OOF F1 is optimistic. Pooled OOF
+AP is also not an independent estimate of the selected procedure. A fully nested
+assessment would be a different, more expensive experiment.
+
+The holdout provides a later evaluation boundary within this run. Its small failure
+support still limits precision of the estimate. The report includes failure
+support, confusion counts, and a Wilson interval for recall. Its class-stratified,
+fixed-score bootstrap AP interval conditions on the observed prevalence and does
+not include variation from retraining or model selection.
+
+## A policy still needs an operating objective
+
+I use F1 because costs and inspection capacity are unspecified. It is not a claim
+that the chosen alarm burden is acceptable in a factory. Given real costs, an
+alternative objective could minimize `C_FN * FN + C_FP * FP`; given a review budget,
+it could constrain alarm count. Either would need to be defined and selected on
+development data before another evaluation.
+
+Exact thresholds, alarm rates, and performance are recorded in the
+[generated results](00_navigation.md#code-and-generated-evidence). The next chapter
+explains how weighted XGBoost changes score fitting, a separate decision from
+threshold selection.
