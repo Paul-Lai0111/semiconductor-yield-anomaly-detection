@@ -1,328 +1,178 @@
-# Semiconductor Yield Anomaly Detection  
-## A Diagnostic Machine Learning Pipeline for Industrial Defect Interception
+# Semiconductor Yield Anomaly Detection
 
----
+A personal investigation of missing sensor measurements, rare failures, and decision thresholds on **UCI SECOM**.
 
-# 1. Project Overview
+I built this project around a deceptively simple problem: predicting every observation as a pass produces about **93.4% accuracy**, while detecting **none of the failures**. I wanted to understand which parts of a machine-learning pipeline actually improve failure detection, and how much confidence I could place in the result.
 
-In semiconductor manufacturing, yield is directly tied to profitability.  
-A small fraction of defective wafers can cause disproportionately large financial damage.
+The investigation keeps my original route: **Median vs. KNN imputation -> PCA -> SMOTE -> weighted XGBoost -> threshold tradeoffs -> sensor interpretation**. The revised implementation adds controlled comparisons, fold-local preprocessing, a frozen evaluation boundary, and enough saved evidence to reconstruct the reported numbers.
 
-This project builds a **defect interception system** using the UCI SECOM dataset.
+**Start here:** [executed notebook](main.ipynb) | [generated results](results/RESULTS.md) | [experiment protocol](docs/11_experiment_protocol.md) | [project journal](docs/12_project_journal.md)
 
-However, this is not a standard classification problem.
+![Development model comparisons and held-out average precision](images/model_comparison.png)
 
-It presents two structural challenges:
+## What The Experiment Found
 
-| Structural Challenge | Description |
-|----------------------|------------|
-| Extreme Class Imbalance | Defects represent a small minority of production |
-| High-Dimensional Noise | 590 raw sensor channels with missingness and redundancy |
+The predefined selection rule chose **Random Forest + KNN + SMOTE** using mean development-fold average precision (AP). XGBoost remains part of the investigation; the code does not assume it must win.
 
-This repository documents a **step-by-step diagnostic investigation**, not just a final model.
+| Selected pipeline: RF / KNN + SMOTE | Result |
+|---|---:|
+| Mean development-fold AP | 0.2110 |
+| Development-fold AP standard deviation | 0.1128 |
+| Holdout AP | 0.2727 |
+| Constant-score holdout AP reference | 0.0669 |
+| Precision at frozen OOF threshold | 0.1923 |
+| Recall at frozen OOF threshold | 0.4762 |
+| F1 at frozen OOF threshold | 0.2740 |
+| Detected failures | 10 / 21 |
+| False alarms | 42 / 293 passing observations |
 
-We answer:
+These results show useful ranking signal, with considerable uncertainty and a substantial false-alarm burden. The selected pipeline's conditional 95% AP interval is **[0.1534, 0.4720]**; its failure-recall Wilson interval is **[0.2834, 0.6763]**. This is an offline diagnostic study, not evidence of factory readiness.
 
-- Why do PCA and SMOTE fail?
-- Why does imbalance suppress probabilities?
-- Why does default threshold collapse detection?
-- Why is threshold tuning central?
-- Why is cost-sensitive XGBoost the final design?
+An important counterexample: Median + Random Forest obtained **0.3210 holdout F1**, above the selected pipeline's 0.2740. I retain the development-selected model rather than change the winner after seeing test results. The full comparison, including XGBoost and the chronological sensitivity check, is in the [generated report](results/RESULTS.md).
 
----
+## Questions I Worked Through
 
-# 2. Dataset Overview
+| Question | Controlled comparison | What I can conclude |
+|---|---|---|
+| Does local imputation help? | The same balanced RF with Median or KNN | Compare observed ranking and operating points; do not assume KNN is inherently better |
+| Does retaining 90% variance retain failure signal? | RF / KNN with and without fold-fitted PCA90 | Variance retention is an unsupervised objective, not a guarantee of discrimination |
+| Does oversampling help? | RF / KNN with and without training-only SMOTE | SMOTE was selected in this run, but its fold variation is large |
+| Does a weighted boosting model improve ranking? | Fixed, regularized XGBoost against simple and RF baselines | Weighting and model complexity need evidence; they do not guarantee calibrated risk |
+| What changes when I move the threshold? | Default 0.5 vs. development-OOF-selected threshold | Report recovered failures together with the extra alerts |
+| Do results transfer forward in time? | Fixed XGBoost on an earlier/later development split | A separate sensitivity check; one random split is not a deployment simulation |
 
-## Basic Statistics
+Zero F1 at threshold 0.5 does not prove that a model has no ranking signal. That distinction changed how I interpret my original PCA and SMOTE experiments.
 
-| Metric | Value |
-|--------|-------|
-| Total wafers | 1,567 |
-| Raw sensors | 590 |
-| Final sensors after cleaning | 446 |
-| Label encoding | -1 → 0 (Pass), 1 → 1 (Fail) |
+## Evaluation Design
 
----
-
-## A Glimpse into the Raw Data
-
-| Index | Sensor_0 | Sensor_1 | ... | Sensor_5 | ... | Sensor_585 | Sensor_589 | Label (Raw) | Target (Mapped) |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **0** | 3030.93 | 2564.00 | ... | 100.0 | ... | 2.3630 | NaN | -1 | **0** |
-| **1** | 3095.78 | 2465.14 | ... | 100.0 | ... | 4.4447 | 208.2045 | -1 | **0** |
-| **2** | 2932.61 | 2559.94 | ... | 100.0 | ... | 3.1745 | 82.8602 | 1 | **1** |
-| ... | ... | ... | ... | ... | ... | ... | ... | ... | ... |
-
-> Labels were remapped for binary classification.
-
-Observation:
-
-- Some sensors are constant (e.g., 100.0)
-- Missing values appear in many columns
-- Sensor scales differ drastically
-
-These characteristics directly influence preprocessing decisions.
-
----
-
-# 3. Data Cleansing Strategy
-
-## Removing High-Missing Sensors (>50%)
-
-Why?
-
-Imputing sensors with extreme sparsity fabricates most of their values.  
-The model risks learning imputation assumptions instead of physical behavior.
-
-## Removing Zero-Variance Sensors
-
-Constant sensors contain zero entropy and no discriminative power.
-
----
-
-## Resulting Feature Space
-
-| Stage | Sensor Count |
-|-------|--------------|
-| Raw | 590 |
-| After Cleaning | **446** |
-
-This reduces dimensional noise and stabilizes geometry.
-
----
-
-# 4. PCA Diagnostic: Understanding Variance Structure
-
-We applied PCA to analyze variance compression.
-
-![PCA Variance Comparison](images/pca_variance_comparison.png)
-
-### Observations
-
-- Both Median and KNN pipelines require **129 components** to reach 90% variance.
-- Variance is distributed across many dimensions.
-- The space is not trivially low-rank.
-
-### Interpretation
-
-PCA does not significantly reduce dimensionality without losing structure.  
-This suggests:
-
-- Sensor space is intrinsically complex.
-- Dimensional compression alone is unlikely to solve class separability.
-
----
-
-# 5. PCA as Dimensionality Reduction (Failure Case)
-
-After reducing to 129 components:
-
-| Metric | Defect Class |
-|--------|--------------|
-| Precision | 0.00 |
-| Recall | 0.00 |
-| F1 | 0.00 |
-
-### Why It Failed
-
-- PCA maximizes variance, not minority separability.
-- Majority class dominates variance structure.
-- Rare defect signals may lie in low-variance directions.
-
-Conclusion:
-
-Variance preservation ≠ anomaly separability.
-
----
-
-# 6. SMOTE Oversampling (Failure Case)
-
-SMOTE was applied to balance training distribution.
-
-Result:
-
-| Metric | Defect Class |
-|--------|--------------|
-| Precision | 0.00 |
-| Recall | 0.00 |
-| F1 | 0.00 |
-
-### Why It Failed
-
-- High-dimensional overlap
-- Synthetic samples blur boundaries
-- Test distribution remains imbalanced
-- Probability suppression persists
-
-Conclusion:
-
-Balancing the training distribution alone does not fix decision collapse.
-
----
-
-# 7. Core Discovery: Probability Suppression
-
-Inspection of predicted probabilities revealed:
-
-Top defect probabilities ranged roughly between:
-
-```
-0.35 – 0.52
+```mermaid
+flowchart TD
+    A[UCI raw files + SHA-256 validation] --> B[Fixed stratified split: seed 2026]
+    B --> C[Development: 1253 rows / 83 failures]
+    B --> H[Holdout: 314 rows / 21 failures]
+    C --> D[Five shared stratified folds]
+    D --> E[Fit filter, scaler, imputer, PCA or SMOTE inside training fold]
+    E --> F[Compare mean fold AP; select thresholds from pooled OOF scores]
+    F --> G[Save frozen protocol and refit on full development data]
+    G --> I[Evaluate all frozen candidates once within this protocol]
+    H --> I
+    I --> J[Predictions, metrics, intervals, figures and selected-model artifact]
 ```
 
-Meaning:
+The seven candidates are a prevalence dummy, balanced logistic regression with Median imputation, RF/Median, RF/KNN, RF/KNN/PCA90, RF/KNN/SMOTE, and weighted XGBoost/KNN.
 
-- The model ranks risk.
-- But probabilities are compressed.
-- Default threshold 0.5 eliminates most defect predictions.
+- **Preprocessing:** training-only missingness/constant-column filtering, then training-fitted standardization before imputation. This gives KNN distances a common scale. Evaluation data never fit a scaler or supply imputation donors.
+- **PCA:** retain 90% training variance separately in each fit. No historical component count is hardcoded.
+- **SMOTE:** create synthetic observations only within the training partition. Evaluation rows and their class prevalence remain unchanged.
+- **Model choice:** maximum mean fold AP, with fixed candidate order breaking exact ties.
+- **Threshold choice:** maximum pooled development OOF failure F1; exact count-based ties retain the highest threshold. No holdout labels participate.
+- **Freeze:** write `protocol.json` before holdout scoring. The CV-selected winner remains selected even if the holdout ordering differs.
+- **Uncertainty:** class-stratified fixed-score AP bootstrap and failure-recall Wilson intervals. Neither captures all training, model-selection, or future-drift uncertainty.
 
-This is not a model failure.  
-It is an operating point mismatch.
+AP means `average_precision_score`, not trapezoidal precision-recall area. OOF threshold F1 is a development optimization result, not an independent performance estimate. Model scores are not presented as calibrated failure probabilities.
 
----
+![Held-out precision-recall curves with frozen operating points](images/pr_curve.png)
 
-# 8. Random Forest Threshold Tuning (Diagnostic Track)
+## Run It
 
-Lowering threshold to **0.15**:
+Use **Python 3.12** and [uv](https://docs.astral.sh/uv/). The repository includes `uv.lock`; no GPU is required.
 
-| Metric | Value |
-|--------|-------|
-| Defect Precision | 0.10 |
-| Defect Recall | 0.86 |
-| Defect F1 | 0.18 |
-| Accuracy | 0.46 |
-
-Interpretation:
-
-- High defect interception
-- Extremely high false alarm rate
-- Operationally unstable
-
-This confirms that threshold is a first-class system parameter.
-
----
-
-# 9. Final Model: Cost-Sensitive XGBoost
-
-## Precision-Recall Curve
-
-![Precision Recall Curve](images/pr_curve.png)
-
-### Observations
-
-- Clear trade-off between recall and precision.
-- Optimal F1 occurs at a very low threshold (~0.0159).
-- PR-AUC significantly above random baseline.
-
----
-
-## Final Optimized Result
-
-| Metric | Value |
-|--------|-------|
-| Best Threshold | 0.0159 |
-| Defect Precision | 0.26 |
-| Defect Recall | 0.57 |
-| Defect F1 | 0.36 |
-| Accuracy | 0.86 |
-
----
-
-## Model Comparison
-
-| Model | Precision | Recall | F1 |
-|--------|----------|--------|----|
-| RF @ 0.15 | 0.10 | 0.86 | 0.18 |
-| XGB @ 0.0159 | 0.26 | 0.57 | 0.36 |
-
-XGBoost provides:
-
-- Better precision-recall balance
-- Reduced false alarm burden
-- Stable operating point
-
----
-
-# 10. Feature Importance
-
-![Feature Importance](images/feature_importance.png)
-
-### Observations
-
-- A small subset of sensors drives predictive signal.
-- Influence is highly concentrated in top 15 sensors.
-
-### Engineering Interpretation
-
-This enables:
-
-- Sensor watchlist creation
-- Drift monitoring
-- Preventive maintenance prioritization
-
-Important:
-
-Feature importance reflects predictive utility, not physical causality.
-
----
-
-# 11. Is the Model Good?
-
-Strengths:
-
-- Breaks zero-detection collapse
-- Demonstrates correct system reasoning
-- Produces meaningful risk ranking
-
-Limitations:
-
-- No cross-validation stability
-- No cost-matrix threshold optimization
-- No probability calibration
-- No drift monitoring
-
-This is a **functional early-warning prototype**, not a final production system.
-
----
-
-# 12. Repository Philosophy
-
-This project demonstrates:
-
-1. Why standard ML fixes fail under imbalance
-2. Why variance-based reduction can erase minority signal
-3. Why oversampling is insufficient alone
-4. Why threshold is a system-level decision
-5. Why cost-sensitive boosting is appropriate for industrial anomaly detection
-
-It documents reasoning, not just results.
-
----
-
-# Documentation
-
-Full diagnostic breakdown available in `/docs`.
-
-```
-docs/00_navigation.md
+```bash
+git clone https://github.com/Paul-Lai0111/semiconductor-yield-anomaly-detection.git
+cd semiconductor-yield-anomaly-detection
+uv sync --locked
+uv run python main.py --overwrite
 ```
 
-Each chapter explains:
+The first run downloads the original UCI archive into ignored `data/raw/` and verifies both raw-file hashes. The default study uses five development folds, 300 trees for the RF and XGBoost candidates, two CPU threads, and 2,000 bootstrap resamples. Its first execution can take several minutes, including plotting/font initialization.
 
-- Why this step?
-- What breaks if skipped?
-- What algorithmic logic applies?
-- What evidence justified the next decision?
+Published results are already included, so `--overwrite` explicitly replaces that run. To execute the notebook and quality checks afterward:
 
----
+```bash
+uv run python scripts/execute_notebook.py
+uv run pytest
+uv run ruff check .
+```
 
-# Final Statement
+For a separate integration run with a smaller compute budget:
 
-This repository designs a defect interception system under:
+```bash
+uv run python main.py --trees 30 --folds 2 --bootstrap 50 --skip-temporal --output artifacts/smoke
+```
 
-- severe imbalance
-- high-dimensional sensor noise
-- asymmetric business cost
-- suppressed probability outputs
+Custom runs keep their metrics, figures, and model under their own output directory. They do not replace the published figures or selected model. An existing nonempty run directory is protected unless `--overwrite` is supplied. A reduced run is a code check, not a reproduction of the published five-fold study.
 
-The final solution — cost-sensitive XGBoost with optimized threshold selection — reflects a statistically grounded and operationally realistic approach.
+`requirements.txt` is an exact runtime export for pip users. Development checks and notebook execution use the locked uv development environment. See `python main.py --help` for all options.
+
+## Inspect The Evidence
+
+| File | Why I save it |
+|---|---|
+| [results/RESULTS.md](results/RESULTS.md) | Readable comparison, uncertainty, and chronological sensitivity |
+| [results/protocol.json](results/protocol.json) | Configuration, candidate parameters, frozen model choice and thresholds |
+| [results/split_manifest.csv](results/split_manifest.csv) | Original row identity, partition, timestamps, class labels and validation folds |
+| [results/fold_metrics.csv](results/fold_metrics.csv) | Per-fold AP, support, retained sensors, PCA dimensions and runtime |
+| [results/oof_predictions.csv](results/oof_predictions.csv) | Reconstruct development comparisons and threshold selection |
+| [results/holdout_predictions.csv](results/holdout_predictions.csv) | Reconstruct final scores, confusion counts and operating-point metrics |
+| [results/metrics.json](results/metrics.json) | Structured results, conditional intervals, environment and source hashes |
+| [results/feature_importance.csv](results/feature_importance.csv) | XGBoost's development-trained gain ranking with original sensor IDs |
+
+The notebook reads these artifacts, checks the split/selection boundaries, independently reconstructs metrics from predictions, and displays current figures. It does not silently train a different experiment or optimize a new threshold on the holdout.
+
+## Use The Saved Pipeline
+
+After running the study, `artifacts/selected_model.joblib` contains the full-development refit, its frozen threshold, original sensor schema, configuration, and protocol hash. It is generated locally rather than committed.
+
+```python
+import joblib
+import pandas as pd
+
+bundle = joblib.load("artifacts/selected_model.joblib")
+measurements = pd.read_csv("new_measurements.csv")
+X = measurements.loc[:, bundle["sensor_columns"]]
+scores = bundle["pipeline"].predict_proba(X)[:, 1]
+alerts = scores >= bundle["threshold"]
+```
+
+Inputs must use the same sensor definitions, units, and ordered names (`sensor_000` through `sensor_589`). This is a reproducible inference interface for the study, not a validated production monitoring service.
+
+## What Changed From My First Version
+
+The first version searched a precision-recall curve on the test set and reported the best threshold on that same set. It also filtered sensors before splitting, fit a separate test scaler in the Median branch, and used unscaled KNN distances. Those choices weakened the comparison.
+
+This revision keeps the investigation but changes the evidence standard. I removed the unsupported blanket claim that KNN improves on Median by 50%, stopped treating PCA/SMOTE failure mechanisms as established facts, and made XGBoost earn its comparison rather than naming it the final winner in advance. The old threshold 0.0159 and F1 0.36 are historical exploratory results; comparing them directly with the revised holdout F1 would conflate several protocol changes.
+
+The code is now split into data validation, pipeline definitions, evaluation, experiment orchestration, and reporting. Regression tests cover leakage boundaries, standardized KNN geometry, training-only SMOTE, class weights, exact F1 ties, data corruption, output isolation, serialization, and report consistency. GitHub Actions runs the locked lint/test checks.
+
+## Limits And Next Questions
+
+- **Small failure support:** there are only 21 failures in the main holdout. One additional detected failure changes recall by approximately 4.8 percentage points.
+- **Previous exploration:** SECOM was used in the original project. The revised holdout is excluded from fitting and selection within this protocol; it is not historically unseen data.
+- **Dependence and time:** the random split assumes exchangeability. Tool/lot identifiers are unavailable. The fixed-XGBoost chronological check is a narrower test and does not validate every candidate's future performance.
+- **Threshold transfer:** OOF models and the full-development refit can have different score distributions. A threshold selected honestly can still transfer poorly.
+- **Unknown economics:** failure costs, inspection capacity, and prevalence under deployment are unspecified. F1 is an explicit experimental rule, not a factory cost model.
+- **Interpretation:** sensor IDs are anonymous. Training gain importance is not physical causality, a maintenance recommendation, or evidence that a 15-sensor model would retain performance.
+
+The next experiments I would prioritize are repeated/forward validation, an externally specified inspection-cost or capacity objective, and probability calibration evaluated without reusing the final test labels. These are future questions, not capabilities claimed by this repository.
+
+## Project Map
+
+```text
+main.py                    CLI entry point
+main.ipynb                 Executed investigation and artifact checks
+secom/data.py              UCI download, checksum and schema validation
+secom/modeling.py          Training-only preprocessing and seven candidates
+secom/evaluation.py        Metrics, exact threshold policy and intervals
+secom/experiment.py        Shared folds, freeze, refits and temporal check
+secom/reporting.py         Figures and generated results
+tests/                     Statistical-boundary and orchestration regressions
+docs/                      Thirteen chapters following the diagnostic journey
+results/                   Committed protocol, predictions and measurements
+images/                    Eight figures from the same run
+```
+
+## Data Attribution
+
+Michael McCann and Adrian Johnston (2008), **SECOM**, UCI Machine Learning Repository. [DOI: 10.24432/C54305](https://doi.org/10.24432/C54305). Dataset license: **CC BY 4.0**.
+
+The raw feature file contains 590 numeric sensor columns; timestamps are supplied with the labels and are kept outside the predictor matrix. See [data/README.md](data/README.md) for integrity hashes and source handling.
