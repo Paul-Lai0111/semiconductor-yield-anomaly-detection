@@ -1,0 +1,53 @@
+{
+  "created_at_utc": "2026-11-02T23:24:21.915802+00:00",
+  "status": "Post-hoc development-only descriptive diagnostics; no model reselection or holdout evaluation.",
+  "original_protocol_sha256": "58e210ccd360a7de16b5f77c5be029e3888f96232e9bfd4c0765184253c5e2d2",
+  "original_source_sha256": "c12ae2d547002062f2f93e6d613b5c2cf3f902ff7c4b8a0230be4c05a78e5f70",
+  "original_selected_candidate": "rf_knn_smote",
+  "input_sha256": {
+    "split_manifest.csv": "edcfeecd32814068e0b3cd2fb757c3ef6059c49772bd31a1fb067adee604c880",
+    "oof_predictions.csv": "d6dc27645b17b8346dd8e5a94690690423ddb904be0b1d15f462d00e70d7ff26",
+    "metrics.json": "b4c3128bbfe21b1ac890e948fb41bb7c524e8b9e9f310f0542ef4ce65e0d439c"
+  },
+  "supplementary_source_sha256": {
+    "scripts/development_diagnostics.py": "210d2532f179a763aabb4e9debf19ced8881df865894a809c7543c0982df64ed",
+    "secom/modeling.py": "3f678b75fd997e1da3c0f93c2151bd83cbfb052abe8fdbe52f37505901697090",
+    "secom/evaluation.py": "9a85e0c5a86848059d1b28112b2d45ed93df3f89f5a7227edf5eddf8da02dc39",
+    "secom/experiment.py": "543a1a0fd03864696ce954e72b0bda68b7ec4a3f404007c3b38eebd16726d079"
+  },
+  "raw_file_sha256": {
+    "secom.data": "20f0e7ee434f7dcbae0eea9ffff009a2b57f42d6b0dc9a5bd4f00782c0a3374c",
+    "secom_labels.data": "126884cf453705c9e61a903fe906f0665a3b45ce3639e621edc5c93c89627e03"
+  },
+  "seeds": [
+    17,
+    43,
+    89
+  ],
+  "folds": 5,
+  "trees": 300,
+  "candidates": [
+    "rf_median",
+    "rf_knn",
+    "rf_knn_smote",
+    "xgb_knn"
+  ],
+  "development_rows": 1253,
+  "development_failures": 83,
+  "seed_policy": "Canonical ascending row IDs; splitter=repeat seed; estimator/SMOTE=repeat seed + fold index.",
+  "review_budgets": [
+    0.05,
+    0.1,
+    0.2
+  ],
+  "review_policy": "Within original validation folds; whole tied score groups; floor per-block capacity.",
+  "environment": {
+    "python": "3.12.13",
+    "numpy": "2.5.4",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.7.2",
+    "imbalanced-learn": "0.14.2",
+    "xgboost": "3.4.1"
+  },
+  "completed_at_utc": "2026-11-02T23:29:27.199506+00:00"
+}

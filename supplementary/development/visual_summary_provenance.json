@@ -1,0 +1,13 @@
+{
+  "renderer_sha256": "18d259710949dbbd50a230ca208aa9ec77e2e1c7246d4ba3284eb006b9a60bc3",
+  "input_sha256": {
+    "results/metrics.json": "b4c3128bbfe21b1ac890e948fb41bb7c524e8b9e9f310f0542ef4ce65e0d439c",
+    "results/protocol.json": "58e210ccd360a7de16b5f77c5be029e3888f96232e9bfd4c0765184253c5e2d2",
+    "results/data_quality.csv": "8fa37a8e01298fc157f7580a5ff002fec4896b774d1a4b465096b585ab6a2395",
+    "supplementary/development/repeat_metrics.csv": "f8ea89bdad216567e81e555ad165d2d65463f5a4426b44739b5835a34b2e7bf8",
+    "supplementary/development/provenance.json": "dca85c303283569c15d3a1d35741c3a74e563581fda34e6da38be35d0528978d"
+  },
+  "output_sha256": "c91de0b055288b0530d3f33b9564907c12a09eb79dabacdaf015a4bdd84809ab",
+  "original_protocol_sha256": "58e210ccd360a7de16b5f77c5be029e3888f96232e9bfd4c0765184253c5e2d2",
+  "selected_candidate": "rf_knn_smote"
+}
