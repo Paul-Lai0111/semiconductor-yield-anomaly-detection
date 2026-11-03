@@ -1,5 +1,10 @@
 # 14 - Findings and Impact
 
+Historical v2 findings. The current broad model search uses a different,
+chronological evaluation boundary: see the [manufacturing results](../manufacturing_results/RESULTS.md)
+and [protocol](15_smart_manufacturing_protocol.md). Do not compare the two runs as
+if only the classifier changed.
+
 ## The question and the answer
 
 Predicting every SECOM observation as a pass gives about **93.4% accuracy** while

@@ -1,0 +1,75 @@
+{
+  "frozen_before_assessment_utc": "2026-11-03T01:07:40.862624+00:00",
+  "winner": "knn_k100_neighbors5",
+  "members": [
+    "knn_k100_neighbors5"
+  ],
+  "member_specs": [
+    {
+      "id": "knn_k100_neighbors5",
+      "family": "knn",
+      "params": {
+        "k": 100,
+        "n_neighbors": 5,
+        "weights": "distance"
+      },
+      "novelty": false
+    }
+  ],
+  "is_rank_blend": false,
+  "supervised_finalists": [
+    "knn_k100_neighbors5",
+    "rf_leaf2_none",
+    "xgb_k100_depth2_weighttrain_ratio"
+  ],
+  "threshold_policy": {
+    "threshold": 0.1931472423164037,
+    "metrics": {
+      "true_positives": 35,
+      "false_negatives": 52,
+      "false_positives": 186,
+      "true_negatives": 980,
+      "precision": 0.1583710407239819,
+      "recall": 0.40229885057471265,
+      "f1": 0.22727272727272727,
+      "f2": 0.30755711775043937,
+      "alarm_count": 221,
+      "alarm_rate": 0.17637669592976857,
+      "reviews_per_caught": 6.314285714285714,
+      "failure_support": 87,
+      "pass_support": 1166,
+      "recall_wilson_95": [
+        0.3055081892296068,
+        0.5073525879893592
+      ]
+    },
+    "max_reviews": 250
+  },
+  "primary_review_fraction": 0.2,
+  "development_selection": {
+    "selection_rank": 1,
+    "candidate": "knn_k100_neighbors5",
+    "mean_block_ap": 0.08293378252569662,
+    "true_positives": 12,
+    "false_negatives": 16,
+    "false_positives": 138,
+    "true_negatives": 586,
+    "precision": 0.08,
+    "recall": 0.42857142857142855,
+    "f1": 0.1348314606741573,
+    "f2": 0.22900763358778625,
+    "alarm_count": 150,
+    "alarm_rate": 0.19946808510638298,
+    "reviews_per_caught": 12.5,
+    "failure_support": 28,
+    "pass_support": 724,
+    "recall_wilson_95": [
+      0.26508547124123694,
+      0.6092921437253123
+    ],
+    "family": "knn",
+    "fit_seconds": 0.952,
+    "warning_count": 0
+  },
+  "protocol_sha256": "1b757a40dd9b9ad81ce6ed9070041929698aef5ed96df5c3a0d2c5011cb95197"
+}

@@ -1,5 +1,12 @@
 # 00 - Diagnostic Documentation Navigation
 
+The current model-independent manufacturing study is documented in
+[chapter 15](15_smart_manufacturing_protocol.md), with the
+[temporal assessment](../manufacturing_results/RESULTS.md) and
+[executed manufacturing notebook](../manufacturing_notebook.ipynb).
+Chapters 01-14 retain the historical v2 diagnostic investigation and its original
+random-split results; those figures are not the current temporal assessment.
+
 ## What I am investigating
 
 I started this side project to understand why a classifier could report high
