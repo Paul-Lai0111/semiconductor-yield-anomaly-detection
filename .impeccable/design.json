@@ -1,0 +1,510 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-18T20:51:33+00:00",
+  "title": "Design System: Fab inspection monitor",
+  "extensions": {
+    "colorMeta": {
+      "graphite": {
+        "role": "primary",
+        "displayName": "Graphite",
+        "canonical": "#1E2328",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#222427",
+          "#3C4044",
+          "#595E63",
+          "#7B8187",
+          "#A1A5AA",
+          "#C8CBCE",
+          "#EDEFF0"
+        ]
+      },
+      "bin-fail": {
+        "role": "secondary",
+        "displayName": "Bin Red",
+        "canonical": "#C43C3C",
+        "tonalRamp": [
+          "#1B0303",
+          "#440E0E",
+          "#711E1E",
+          "#A12F2F",
+          "#CD524F",
+          "#E6857F",
+          "#FCB6B0",
+          "#FFE3DF"
+        ]
+      },
+      "bin-alarm": {
+        "role": "secondary",
+        "displayName": "Bin Amber",
+        "canonical": "#C9851F",
+        "tonalRamp": [
+          "#150800",
+          "#371D00",
+          "#5D3500",
+          "#864F00",
+          "#AE7215",
+          "#CA9B61",
+          "#E6C49D",
+          "#FFEBD4"
+        ]
+      },
+      "bin-alarm-status": {
+        "role": "secondary",
+        "displayName": "Status Amber",
+        "canonical": "#B8741A",
+        "tonalRamp": [
+          "#150800",
+          "#371D00",
+          "#5D3500",
+          "#864F00",
+          "#AE7126",
+          "#CA9A67",
+          "#E6C4A1",
+          "#FFEBD6"
+        ]
+      },
+      "bin-pass-light": {
+        "role": "secondary",
+        "displayName": "Pale Bin Green",
+        "canonical": "#B9D9C2",
+        "tonalRamp": [
+          "#070D09",
+          "#1C271F",
+          "#334538",
+          "#4C6553",
+          "#6D8875",
+          "#96AB9C",
+          "#C0CFC4",
+          "#E8F1EB"
+        ]
+      },
+      "bin-pass-status": {
+        "role": "secondary",
+        "displayName": "Status Green",
+        "canonical": "#2F8F4E",
+        "tonalRamp": [
+          "#010F04",
+          "#062C13",
+          "#104C25",
+          "#1C6F39",
+          "#429459",
+          "#79B587",
+          "#AED7B6",
+          "#DEF6E2"
+        ]
+      },
+      "steel": {
+        "role": "tertiary",
+        "displayName": "Steel",
+        "canonical": "#4A6A8A",
+        "tonalRamp": [
+          "#060C12",
+          "#192532",
+          "#2E4255",
+          "#45607C",
+          "#6683A2",
+          "#90A7BF",
+          "#BCCDDE",
+          "#E6F0FA"
+        ]
+      },
+      "silicon-ground": {
+        "role": "neutral",
+        "displayName": "Silicon Ground",
+        "canonical": "#E4E7EA",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#232425",
+          "#3E4041",
+          "#5C5E60",
+          "#7E8083",
+          "#A3A5A7",
+          "#C9CBCC",
+          "#EEEEEF"
+        ]
+      },
+      "silicon-panel": {
+        "role": "neutral",
+        "displayName": "Silicon Panel",
+        "canonical": "#F4F6F7",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#232424",
+          "#3F4040",
+          "#5C5E5E",
+          "#7F8081",
+          "#A3A5A5",
+          "#CACBCB",
+          "#EEEEEF"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#CBD1D6",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#222426",
+          "#3D4043",
+          "#5A5E62",
+          "#7C8185",
+          "#A1A5A8",
+          "#C8CBCD",
+          "#EDEFF0"
+        ]
+      },
+      "chart-grid": {
+        "role": "neutral",
+        "displayName": "Chart Grid",
+        "canonical": "#D9DDE1",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#232426",
+          "#3E4042",
+          "#5B5E61",
+          "#7D8184",
+          "#A2A5A7",
+          "#C9CBCC",
+          "#EDEEF0"
+        ]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#5B656E",
+        "tonalRamp": [
+          "#090B0D",
+          "#212528",
+          "#3A4146",
+          "#565F67",
+          "#78828A",
+          "#9EA6AC",
+          "#C6CBD0",
+          "#ECEFF2"
+        ]
+      },
+      "pass-point": {
+        "role": "neutral",
+        "displayName": "Pass Point",
+        "canonical": "#8C969F",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#212528",
+          "#3B4146",
+          "#575F66",
+          "#798189",
+          "#9FA6AC",
+          "#C6CBD0",
+          "#ECEFF1"
+        ]
+      },
+      "random-baseline": {
+        "role": "neutral",
+        "displayName": "Random Baseline",
+        "canonical": "#9AA3AB",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#212427",
+          "#3B4045",
+          "#575F65",
+          "#798188",
+          "#9FA5AB",
+          "#C7CBCF",
+          "#ECEFF1"
+        ]
+      },
+      "chip-warn-bg": {
+        "role": "neutral",
+        "displayName": "Warn Chip Tint",
+        "canonical": "#F3E2C4",
+        "tonalRamp": [
+          "#0E0B06",
+          "#292319",
+          "#483E2E",
+          "#695C45",
+          "#8C7E66",
+          "#AEA390",
+          "#D1CABC",
+          "#F2EEE6"
+        ]
+      },
+      "chip-warn-ink": {
+        "role": "neutral",
+        "displayName": "Warn Chip Ink",
+        "canonical": "#7A4A0C",
+        "tonalRamp": [
+          "#130902",
+          "#331F0A",
+          "#573817",
+          "#7D5325",
+          "#A47545",
+          "#C29D79",
+          "#E0C5AC",
+          "#FBEBDD"
+        ]
+      },
+      "chip-ok-bg": {
+        "role": "neutral",
+        "displayName": "OK Chip Tint",
+        "canonical": "#D5EBDC",
+        "tonalRamp": [
+          "#080C0A",
+          "#1F2621",
+          "#37433B",
+          "#526257",
+          "#738579",
+          "#9BA99F",
+          "#C3CDC7",
+          "#EAF0EC"
+        ]
+      },
+      "chip-ok-ink": {
+        "role": "neutral",
+        "displayName": "OK Chip Ink",
+        "canonical": "#1F6136",
+        "tonalRamp": [
+          "#040E06",
+          "#112A19",
+          "#23492E",
+          "#356B45",
+          "#568F66",
+          "#86B190",
+          "#B6D4BC",
+          "#E2F4E6"
+        ]
+      },
+      "rail-raised": {
+        "role": "neutral",
+        "displayName": "Rail Raised",
+        "canonical": "#2B3238",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#212427",
+          "#3C4045",
+          "#585F64",
+          "#7A8188",
+          "#A0A5AA",
+          "#C7CBCF",
+          "#ECEFF1"
+        ]
+      },
+      "rail-rule": {
+        "role": "neutral",
+        "displayName": "Rail Rule",
+        "canonical": "#3A424A",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#212428",
+          "#3B4046",
+          "#575F66",
+          "#798189",
+          "#9FA5AC",
+          "#C6CBD0",
+          "#ECEFF1"
+        ]
+      },
+      "rail-ink": {
+        "role": "neutral",
+        "displayName": "Rail Ink",
+        "canonical": "#E6EAED",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#232425",
+          "#3E4042",
+          "#5B5E60",
+          "#7D8183",
+          "#A2A5A7",
+          "#C9CBCC",
+          "#EDEEEF"
+        ]
+      },
+      "rail-accent": {
+        "role": "neutral",
+        "displayName": "Rail Accent",
+        "canonical": "#A9D3B4",
+        "tonalRamp": [
+          "#060D08",
+          "#19281D",
+          "#2E4635",
+          "#46674F",
+          "#678A70",
+          "#91AD98",
+          "#BDD0C2",
+          "#E6F2E9"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page title."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Streamlit h2."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Tab section questions and About headings."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "The one finding sentence under the title."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Prose, byline, captions."
+      },
+      "readout-value": {
+        "displayName": "Readout Value",
+        "purpose": "Headline numbers in the readout table."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Readout labels, legend, notes."
+      },
+      "chip": {
+        "displayName": "Chip",
+        "purpose": "Status chips only."
+      },
+      "measure": {
+        "displayName": "Measure",
+        "purpose": "Unit IDs, counts, sensor names."
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [
+      {
+        "name": "container-max",
+        "value": "1480px"
+      },
+      {
+        "name": "wafer-max",
+        "value": "600px"
+      }
+    ],
+    "chartTheme": {
+      "name": "wafer",
+      "background": "transparent",
+      "font": "Public Sans",
+      "axisLabel": "#5B656E 11px",
+      "axisTitle": "#5B656E 12px 500",
+      "grid": "#D9DDE1",
+      "domainTick": "#CBD1D6",
+      "title": "#1E2328 13px 600 start",
+      "legendOrient": "bottom",
+      "limitRule": "#1E2328 dashed [5,4]"
+    }
+  },
+  "components": [
+    {
+      "name": "Readout Table",
+      "kind": "card",
+      "refersTo": "readout-table",
+      "description": "Headline numbers as a spec table: muted label, tabular value, muted note.",
+      "html": "<table class=\"ds-readout\"><tr><th>Inspection queue</th><td><span class=\"ds-v\">62 <small>of 314 units</small></span><span class=\"ds-n\">20% budget; ties broken by unit ID</span></td></tr><tr><th>Recorded failures found</th><td><span class=\"ds-v\">5 <small>of 17</small></span><span class=\"ds-n\">Random inspection: 3.4 expected</span></td></tr></table>",
+      "css": ".ds-readout{font-family:'Public Sans',sans-serif;width:100%;border-collapse:collapse;background:#F4F6F7;border:1px solid #CBD1D6;border-radius:6px;overflow:hidden;font-variant-numeric:tabular-nums;color:#1E2328;font-size:15px}.ds-readout th{text-align:left;font-weight:500;color:#5B656E;font-size:0.82rem;padding:12px 16px;border-bottom:1px solid #CBD1D6;width:36%;vertical-align:top}.ds-readout td{padding:10px 16px 12px;border-bottom:1px solid #CBD1D6}.ds-readout tr:last-child th,.ds-readout tr:last-child td{border-bottom:0}.ds-v{font-size:1.45rem;font-weight:650;letter-spacing:-0.01em}.ds-v small{font-size:0.9rem;font-weight:500;color:#5B656E}.ds-n{display:block;font-size:0.82rem;color:#5B656E;margin-top:2px}"
+    },
+    {
+      "name": "Warn Chip",
+      "kind": "chip",
+      "refersTo": "chip-warn",
+      "description": "Drift status beside a readout value.",
+      "html": "<span class=\"ds-chip-warn\">WARNING</span>",
+      "css": ".ds-chip-warn{font-family:'Public Sans',sans-serif;display:inline-block;font-size:0.72rem;font-weight:650;letter-spacing:0.04em;padding:2px 8px;border-radius:4px;background:#F3E2C4;color:#7A4A0C}"
+    },
+    {
+      "name": "OK Chip",
+      "kind": "chip",
+      "refersTo": "chip-ok",
+      "description": "In-control status beside a readout value.",
+      "html": "<span class=\"ds-chip-ok\">OK</span>",
+      "css": ".ds-chip-ok{font-family:'Public Sans',sans-serif;display:inline-block;font-size:0.72rem;font-weight:650;letter-spacing:0.04em;padding:2px 8px;border-radius:4px;background:#D5EBDC;color:#1F6136}"
+    },
+    {
+      "name": "Step Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Previous / Next queue stepping and downloads; graphite on panel, hairline border.",
+      "html": "<button class=\"ds-btn\">Next</button>",
+      "css": ".ds-btn{font-family:'Public Sans',sans-serif;background:#F4F6F7;color:#1E2328;border:1px solid #CBD1D6;border-radius:6px;padding:6px 16px;font-size:15px;cursor:pointer;transition:border-color .15s,color .15s}.ds-btn:hover{border-color:#1E2328}.ds-btn:focus-visible{outline:2px solid #1E2328;outline-offset:2px}.ds-btn:active{background:#E4E7EA}"
+    },
+    {
+      "name": "Unit Select",
+      "kind": "input",
+      "refersTo": null,
+      "description": "Unit picker beside the step buttons.",
+      "html": "<select class=\"ds-select\"><option>Unit 1253</option><option>Unit 1254</option></select>",
+      "css": ".ds-select{font-family:'Public Sans',sans-serif;background:#F4F6F7;color:#1E2328;border:1px solid #CBD1D6;border-radius:6px;padding:6px 12px;font-size:15px}.ds-select:hover{border-color:#5B656E}.ds-select:focus-visible{outline:none;border-color:#1E2328}"
+    },
+    {
+      "name": "Sidebar Rail",
+      "kind": "nav",
+      "refersTo": "sidebar-rail",
+      "description": "Graphite control rail; pale green accent on controls.",
+      "html": "<nav class=\"ds-rail\"><h3>Batch controls</h3><p>Rank a completed batch of SECOM units for inspection.</p><label>Inspection budget <b>20%</b></label><div class=\"ds-track\"><span></span></div><hr></nav>",
+      "css": ".ds-rail{font-family:'Public Sans',sans-serif;background:#1E2328;color:#E6EAED;padding:20px;width:240px;border-radius:6px}.ds-rail h3{margin:0 0 4px;font-size:1.125rem;font-weight:600}.ds-rail p{margin:0 0 16px;font-size:0.82rem;opacity:.75}.ds-rail label{font-size:0.86rem}.ds-track{height:4px;background:#3A424A;border-radius:2px;margin:10px 0 16px}.ds-track span{display:block;width:30%;height:100%;background:#A9D3B4;border-radius:2px}.ds-rail hr{border:0;border-top:1px solid #3A424A}"
+    },
+    {
+      "name": "Wafer Bin Legend",
+      "kind": "custom",
+      "refersTo": "die-cell",
+      "description": "Shape plus colour bin legend with mono counts; square die swatches.",
+      "html": "<div class=\"ds-legend\"><span><i style=\"--c:#C43C3C\"></i>Caught failure <b>5</b></span><span><i style=\"--c:#1E2328\"></i>False alarm <b>57</b></span><span><i class=\"o\" style=\"--c:#C43C3C\"></i>Missed failure <b>12</b></span><span><i style=\"--c:#B9D9C2\"></i>Not queued <b>240</b></span></div>",
+      "css": ".ds-legend{font-family:'Public Sans',sans-serif;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:0.82rem;color:#5B656E}.ds-legend span{display:inline-flex;align-items:center;gap:6px}.ds-legend i{width:11px;height:11px;display:inline-block;border-radius:1px;background:var(--c)}.ds-legend i.o{background:transparent;box-shadow:inset 0 0 0 2px var(--c)}.ds-legend b{font-family:'JetBrains Mono',monospace;font-size:0.86em;color:#1E2328}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Probe-Station Bin Map",
+    "overview": "The batch is read the way a yield engineer reads a lot: as a wafer bin map. Every unit is one square die cell laid on a serpentine probe path in time order inside a notched wafer outline, and state is carried by bin colour the way a sort map carries it. The world is polished-silicon grey with lighter panels, graphite ink and a graphite control rail, and hairline rules for structure. Nothing is decorative; colour appears only where it means a bin, an alarm or a drift state.\n\nDensity is engineer-grade: a readout spec table instead of KPI tiles, tabular figures, monospace for every measurement, unit ID and sensor name, and live counts in tab labels. The surface is flat. Depth comes from tonal layering (ground, panel, rail), never from drop shadows.",
+    "keyCharacteristics": [
+      "Wafer bin map as the primary reading of a batch: square cells, notched circular outline, shape plus colour legend with counts.",
+      "Three-tone tonal stack: silicon ground, lighter panel, graphite rail.",
+      "Bin colours (red fail, amber alarm/drift, pale green pass) are the only chromatic colour; graphite does all other work.",
+      "Public Sans for interface text, JetBrains Mono only for measurements and identifiers.",
+      "Flat surfaces, hairline borders, 6px panel corners, square data cells."
+    ],
+    "rules": [
+      {
+        "name": "The Bin Colour Rule",
+        "body": "Chromatic colour means state. Red is a recorded failure, amber is an MSPC alarm or drift, pale green is pass or not queued. A colour that carries no bin meaning is graphite or a neutral.",
+        "section": "colors"
+      },
+      {
+        "name": "The Shape Plus Colour Rule",
+        "body": "No state is shown by colour alone: missed failures are outlined cells, control-chart failures are triangles against circles, policy lines differ by dash, legends carry counts.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono Means Measured Rule",
+        "body": "JetBrains Mono appears only on measurements, unit IDs and sensor names. Interface text, headings and labels stay in Public Sans.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Figures Rule",
+        "body": "Any column or readout of numbers uses tabular numerals so values align across rows.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tonal Stack Rule",
+        "body": "Separate planes by tone and hairline, not by shadow: ground, panel, rail.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do read any batch-level result on the wafer bin map before any table.",
+      "Do reserve red, amber and pale green for bin state, and pair each state with a shape, dash or label.",
+      "Do set measurements, unit IDs and sensor names in JetBrains Mono at 0.86em.",
+      "Do use the readout table (label, tabular value, muted note) for headline numbers, with the random baseline next to every catch count.",
+      "Do separate surfaces with tone and 1px hairline (`hairline`) borders."
+    ],
+    "donts": [
+      "Don't add a KPI-tile grid; the readout table replaces it.",
+      "Don't add drop shadows or elevation; the system is flat.",
+      "Don't round die cells; data cells stay square.",
+      "Don't introduce a chromatic accent that carries no bin meaning."
+    ]
+  }
+}
