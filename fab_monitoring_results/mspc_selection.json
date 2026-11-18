@@ -1,0 +1,10 @@
+{
+  "frozen_before_assessment_utc": "2026-11-18T19:49:08.083251+00:00",
+  "candidate": "mspc_var95_spe",
+  "variance": 0.95,
+  "statistic": "spe",
+  "development_true_positives": 10,
+  "development_failures": 28,
+  "development_mean_block_ap": 0.11221032139300642,
+  "protocol_sha256": "4c0a2a1b6d64185fed68341669221b9bfa7fa5c0b864c391ee1f70b63c8baf74"
+}

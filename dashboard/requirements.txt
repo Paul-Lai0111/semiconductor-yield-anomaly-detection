@@ -1,0 +1,2 @@
+# Streamlit Community Cloud reads this file (next to the entry point).
+-r ../requirements-service.txt

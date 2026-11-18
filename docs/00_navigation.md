@@ -1,5 +1,10 @@
 # 00 - Diagnostic Documentation Navigation
 
+**v4 (current):** the fab-operations layer (MSPC baseline, drift, retraining policies,
+sensor-ranking stability, scoring service) is summarised in the
+[engineering report, chapter 16](16_engineering_report.md), with full numbers in
+[fab_monitoring_results/RESULTS.md](../fab_monitoring_results/RESULTS.md).
+
 The current model-independent manufacturing study is documented in
 [chapter 15](15_smart_manufacturing_protocol.md), with the
 [temporal assessment](../manufacturing_results/RESULTS.md) and

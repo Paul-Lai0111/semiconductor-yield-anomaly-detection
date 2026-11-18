@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "frozen_before_analysis_utc": "2026-11-18T19:49:05.751905+00:00",
+  "config": {
+    "seed": 2026,
+    "jobs": 2,
+    "review_fraction": 0.2,
+    "alpha": 0.99,
+    "stability_bootstrap": 50,
+    "stability_slices": 4,
+    "stability_top_k": 20,
+    "retrain": {
+      "batch_size": 100,
+      "n_batches": 11,
+      "label_delay": 1,
+      "review_fraction": 0.2,
+      "period": 3,
+      "drift_threshold": 0.1,
+      "bins": 10,
+      "seed": 2026
+    }
+  },
+  "v3_selection_sha256": "eaa9ff06a0366e94866364e0b53b5b8836f7cdf0ac8eda20524585c090636e32",
+  "v3_protocol_sha256": "1b757a40dd9b9ad81ce6ed9070041929698aef5ed96df5c3a0d2c5011cb95197",
+  "v3_winner": "knn_k100_neighbors5",
+  "mspc_grid": {
+    "variance": [
+      0.8,
+      0.9,
+      0.95
+    ],
+    "statistic": [
+      "t2",
+      "spe",
+      "combined"
+    ]
+  },
+  "mspc_selection_rule": "Same as v3: most forward-block failures caught at exact 20% review, then mean block AP, then grid order. Development data only.",
+  "mspc_fit": "PCA on training passes only; training-local pruning, median imputation, z-scoring. T2 limit from F distribution, SPE limit from Box g*chi2(h), alpha=0.99.",
+  "hybrid": "Predeclared equal rank blend of the frozen v3 winner and the selected MSPC score; reported, never used to re-select.",
+  "drift": "Per-sensor PSI (10 reference-quantile bins + missing bin), KS with BH adjustment, missing-rate change.",
+  "retraining": "Prequential replay of the full timeline in 100-row batches, labels delayed by one batch; frozen / periodic / drift-triggered / always.",
+  "stability": "Stratified bootstraps and consecutive time slices of development data; ANOVA, random forest and MSPC-SPE rankings.",
+  "source_sha256": {
+    "fabops/__init__.py": "7d21af64f8af3be5c4c5652dd64847c65130696f6a545db525a82a53c31798d1",
+    "fabops/api.py": "74d194374c27e95a3311854d82068dff50acc27aac193feea3460817aa7f216f",
+    "fabops/drift.py": "e227801b8bc7bd3f26180004d63c0076a3ac7763ab71ba49bf46ca2473deec4b",
+    "fabops/mspc.py": "54ef365b6e435c1f86c36fb58e62421b8dfbd6ba7930e74f0ed2e7cdfe0d4535",
+    "fabops/reporting.py": "bd82f5979b8b4dc3448540c605311b9958563c5a5f5c80796e9d57b1494fe844",
+    "fabops/retraining.py": "60ccfcbf7f1f784ec052b92a629f7e4e782fbb1cb17cdee7d2c317679d0bb488",
+    "fabops/service.py": "48f4625cc310cab83391fbb80c314d935905f3136c215c8a1c3d0e934587e37f",
+    "fabops/stability.py": "971a8d3d2b6c5de3d6364852e2d254e593b15778a8b399ecdc7e906063058ccc",
+    "fabops/study.py": "5e44174498eee92be0adf922f9a93bbf9aea6e0be8af568ca7efb4aaa0f7fbcd"
+  }
+}
