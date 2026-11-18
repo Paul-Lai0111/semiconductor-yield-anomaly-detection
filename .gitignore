@@ -12,3 +12,6 @@ data/raw/
 artifacts/
 manufacturing_results/artifacts/
 *.log
+fab_monitoring_results/artifacts/
+# Private interview notes: kept local, never published.
+interview_notes/

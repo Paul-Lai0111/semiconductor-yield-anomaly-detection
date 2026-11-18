@@ -1,0 +1,9 @@
+model,policy,failures,caught,reviews,recall,retrains,caught_minus_baseline,batches_better,batches_worse,sign_test_p
+v3_selected_knn,frozen,46,10,220,0.21739130434782608,0,0,0,0,1.0
+v3_selected_knn,periodic,46,14,220,0.30434782608695654,3,4,5,2,0.453125
+v3_selected_knn,drift_triggered,46,15,220,0.32608695652173914,9,5,4,2,0.6875
+v3_selected_knn,always,46,15,220,0.32608695652173914,9,5,4,2,0.6875
+mspc,frozen,46,10,220,0.21739130434782608,0,0,0,0,1.0
+mspc,periodic,46,11,220,0.2391304347826087,3,1,2,1,1.0
+mspc,drift_triggered,46,11,220,0.2391304347826087,9,1,2,1,1.0
+mspc,always,46,11,220,0.2391304347826087,9,1,2,1,1.0
