@@ -27,6 +27,9 @@ Public Streamlit Community Cloud app (https://semiconductor-yield-anomaly-detect
 - `fabops/*.py`, `smartfab/`, `secom/`, `pyproject.toml`, `uv.lock` are hash-frozen; dashboard changes must stay in `dashboard/` and `.streamlit/`.
 - English only.
 
+## Brand Commitments
+Author identity shown on the app and README: Paul Lai, M.S. in Data Science, UC San Diego, holai@ucsd.edu, GitHub Paul-Lai0111.
+
 ## Evidence on Hand
 fab_monitoring_results/ (metrics.json, RESULTS.md, figures), manufacturing_results/ (v3), docs/16_engineering_report.md. No users, testimonials, deployments or measured yield/cost savings exist; never imply them.
 

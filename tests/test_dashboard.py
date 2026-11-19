@@ -14,6 +14,9 @@ def test_dashboard_renders_demo_batch_and_reacts_to_controls():
     text = " ".join(m.value for m in app.markdown)
     assert "<b>62 of 314</b>" in text and "<b>5 of 17</b>" in text
     assert [t.label for t in app.tabs][0] == "Queue · 62"
+    assert "Paul Lai" in text and "holai@ucsd.edu" in text and "UC San Diego" in text
+    assert app.expander[0].label == "How to use this monitor"
+    assert "sensor_000" in " ".join(m.value for m in app.expander[0].markdown)
 
     app.sidebar.slider[0].set_value(30).run()
     assert not app.exception
