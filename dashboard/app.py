@@ -38,6 +38,8 @@ from smartfab.policies import capacity_mask, chronological_partition  # noqa: E4
 
 DATA_DIR = ROOT / "data" / "raw"
 REPO = "https://github.com/Paul-Lai0111/semiconductor-yield-anomaly-detection"
+AUTHOR, AFFILIATION, EMAIL = "Paul Lai", "M.S. in Data Science, UC San Diego", "holai@ucsd.edu"
+PROFILE = "https://github.com/Paul-Lai0111"
 POLICIES = {
     "v3_selected_knn": "ML ranking (frozen KNN)",
     "mspc": "MSPC (PCA, SPE)",
@@ -89,6 +91,12 @@ st.markdown(
 .note {{ color: {MUTED}; font-size: 0.8rem; margin: 2px 0 0 6px; max-width: 72ch; }}
 .unit-head {{ font-size: 1.02rem; font-weight: 650; margin: 0.2rem 0 0.1rem; }}
 .unit-sub {{ color: {MUTED}; font-size: 0.84rem; margin-bottom: 0.4rem; }}
+.author {{ font-size: 0.9rem; color: {MUTED}; margin: -0.9rem 0 0.9rem; }}
+.author b {{ color: {GRAPHITE}; font-weight: 650; }}
+.author a {{ color: {GRAPHITE}; text-underline-offset: 3px; }}
+.guide {{ max-width: 76ch; line-height: 1.55; }}
+.guide ol {{ padding-left: 1.2rem; margin: 0.2rem 0 0.6rem; }}
+.guide li {{ margin-bottom: 0.45rem; }}
 .prose {{ max-width: 70ch; line-height: 1.6; }}
 .prose h3 {{ margin-top: 1.4rem; }}
 </style>
@@ -203,6 +211,8 @@ with st.sidebar:
         f"{bundle['provenance']['training_last_timestamp'][:10]}, and frozen. Nothing retrains here."
     )
     st.caption(f"[Source on GitHub]({REPO}) · [Engineering report]({REPO}/blob/main/docs/16_engineering_report.md)")
+    st.divider()
+    st.caption(f"Built by **{AUTHOR}**, {AFFILIATION}  \n[{EMAIL}](mailto:{EMAIL}) · [GitHub]({PROFILE})")
 
 if upload is not None:
     batch = pd.read_csv(upload, dtype=str, keep_default_na=False)
@@ -232,6 +242,11 @@ order = pd.Series(range(n_units), index=ids)  # batch order, which is time order
 # ---------------------------------------------------------------- opening: the finding
 
 st.title("Fab inspection monitor")
+st.markdown(
+    f"<div class='author'>A side project by <b>{AUTHOR}</b> · {AFFILIATION} · "
+    f"<a href='mailto:{EMAIL}'>{EMAIL}</a></div>",
+    unsafe_allow_html=True,
+)
 if has_outcomes:
     caught = int(queue.loc[queue.review.eq(1), "label"].sum())
     failures = int(queue.label.sum())
@@ -255,10 +270,35 @@ else:
     )
 st.markdown(
     f"<div class='byline'>{source}. A frozen, chronologically validated ranking decides which units to inspect "
-    f"when only part of a batch can be reviewed. <a href='{REPO}'>How it was built</a><br>"
-    "Change the budget, ranking or batch in the sidebar, or with » on a phone.</div>",
+    f"when only part of a batch can be reviewed. <a href='{REPO}'>How it was built</a></div>",
     unsafe_allow_html=True,
 )
+
+with st.expander("How to use this monitor"):
+    st.markdown(
+        """<div class='guide'><ol>
+<li><b>Read the sentence above.</b> It says how many units the queue inspects and how many recorded failures it
+finds, next to random inspection and MSPC control limits.</li>
+<li><b>Read the wafer.</b> Each cell is one unit of the batch in time order. Red filled cells are failures the queue
+caught, red outlined cells are failures it missed, dark cells are passing units it flagged, pale cells were not
+queued.</li>
+<li><b>Click a cell</b>, or use Previous and Next, to see that unit's rank, its T² and SPE against their limits, and
+the sensors contributing most to its SPE.</li>
+<li><b>Change the controls in the sidebar</b> (the » button on a phone): the inspection budget from 5% to 50%, the
+ranking (ML, MSPC or a blend), and whether recorded outcomes are shown. The wafer and every tab update.</li>
+<li><b>Open the tabs</b> for the full queue (downloadable as CSV), the alarm Pareto, T² and SPE control charts,
+sensor drift, the detection-versus-budget curve, the sensor watchlist, and the project summary.</li>
+<li><b>Score your own batch</b> by uploading a CSV with the 590 columns <span class='mono'>sensor_000</span> to
+<span class='mono'>sensor_589</span> and an optional integer <span class='mono'>unit_id</span>. Blank cells are
+missing values. Recorded outcomes are never read from uploads. The sample below has the exact format.</li>
+</ol></div>""",
+        unsafe_allow_html=True,
+    )
+    if labels is not None:
+        st.download_button(
+            "Download a sample batch (20 units, CSV)", batch.head(20).to_csv(index=False),
+            "sample_batch.csv", help="Twenty units from the demo batch, without pass/fail labels.",
+        )
 
 # ---------------------------------------------------------------- wafer bin map + readout
 
@@ -527,6 +567,8 @@ significance.</p>
 <h3>Limits</h3>
 <p>{about["failures"]} failures leave wide uncertainty. Sensors are anonymised, so contributions are inspection hints, not
 root causes. No yield, throughput or cost benefit was measured.</p>
+<h3>Author</h3>
+<p>{AUTHOR}, {AFFILIATION}. <a href='mailto:{EMAIL}'>{EMAIL}</a> · <a href='{PROFILE}'>GitHub</a></p>
 <p><a href='{REPO}'>Code, tests and protocol on GitHub</a> ·
 <a href='{REPO}/blob/main/docs/16_engineering_report.md'>Engineering report</a></p>
 </div>""",

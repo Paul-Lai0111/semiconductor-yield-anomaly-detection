@@ -2,6 +2,8 @@
 
 **Which units should a fab inspect when only 20% of a batch can be reviewed, and what does it take to keep that decision working as the process drifts?**
 
+**[Open the live monitor](https://semiconductor-yield-anomaly-detection-paullai.streamlit.app/)** · by **Paul Lai**, M.S. in Data Science, UC San Diego · [holai@ucsd.edu](mailto:holai@ucsd.edu)
+
 Using UCI SECOM (1,567 units, 590 anonymised sensors, 104 failures), I built the full path from model search to an engineer-facing tool:
 
 1. A **frozen, chronological search** over 50 detector configurations (v3).
@@ -106,6 +108,24 @@ The replay covers 1,100 units in 100-unit batches. Each batch is scored by the m
 
 A single feature-importance run on 87 failures is not trustworthy, so I measured how unstable it is. Each method keeps a different top 20 on each resample (Jaccard about 0.2), almost nothing survives across time slices (about 0.01), and the three methods barely agree with each other (≤ 0.05). The output is a **watchlist with stability tiers**: 1 stable sensor, 17 moderate. It is a prioritised checklist, not a root-cause claim.
 
+## Using the live monitor
+
+[The live monitor](https://semiconductor-yield-anomaly-detection-paullai.streamlit.app/) replays the frozen 314-unit assessment block, whose pass/fail outcomes are known, so you can see what the queue would have caught. The first visit after a quiet period takes about a minute while the app rebuilds its models.
+
+1. **Read the opening sentence.** It gives the queue size and the recorded failures it contains, next to random inspection and MSPC control limits.
+2. **Read the wafer map.** Each cell is one unit, in time order along a serpentine probe path (SECOM has no die positions, so this is a batch map, not a spatial one). Red filled cells are caught failures, red outlined cells are missed failures, dark cells are passing units the queue flagged, and pale cells were not queued.
+3. **Click a cell**, or use *Previous* and *Next*. The panel shows that unit's rank, its T² and SPE against their 99% limits, and the sensors contributing most to its SPE.
+4. **Change the sidebar controls** (the » button on a phone): the inspection budget from 5% to 50%, the ranking (frozen ML KNN, MSPC SPE, or a rank blend), and whether recorded outcomes are shown.
+5. **Use the tabs.** *Queue* lists the inspection queue and downloads the scored batch as CSV. *Alarms* is the sensor Pareto, *Control charts* shows T² and SPE with limits, *Drift* shows PSI against the training window, *Budget* plots failures found against budget for every policy, *Watchlist* lists the stability-tiered sensors, and *About* summarises the project.
+6. **Score your own batch.** Upload a CSV with the 590 columns `sensor_000` … `sensor_589` and an optional unique integer `unit_id`; blank cells are missing values. *How to use this monitor* on the page offers a 20-unit sample file in the exact format. Outcomes are never read from uploads, so the outcome views are demo-only.
+
+| Wafer bin | Meaning |
+|---|---|
+| Red, filled | Recorded failure inside the inspection queue (caught) |
+| Red, outlined | Recorded failure outside the queue (missed) |
+| Dark | Passing unit inside the queue (false alarm) |
+| Pale | Not queued |
+
 ## 5. The service
 
 ```bash
@@ -186,6 +206,10 @@ The loader verifies the original UCI SHA-256 hashes and caches raw files in igno
 - With 17 assessment failures and 46 replay failures, differences of a few units are within noise.
 - Sensors are anonymised, so contributions and rankings are inspection priorities, not physical root causes.
 - Prevented defects, yield, throughput and financial savings were not measured. The cost grid is an explicit assumption model.
+
+## Author
+
+**Paul Lai** · M.S. in Data Science, UC San Diego · [holai@ucsd.edu](mailto:holai@ucsd.edu) · [GitHub](https://github.com/Paul-Lai0111)
 
 ## Data attribution
 
