@@ -22,3 +22,9 @@ interview_notes/
 .claude/
 .impeccable/hook.cache.json
 .impeccable/questions/
+# Design-tool and working notes: kept local, not published.
+DESIGN.md
+PRODUCT.md
+.impeccable/
+docs/0*_*.md
+docs/1[0-4]_*.md
